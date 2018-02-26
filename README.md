@@ -4,7 +4,7 @@ PCAP BASED MUD GENERATOR
 # Installation
 
 ```sh
-$ git clone https://github.com/ayyoob/DEF.git
+$ git clone https://github.com/ayyoob/pcap-mud-generator.git
 $ cd pcap-mud-generator
 $ mvn clean install
 $ java -jar target/mud-generator-1.0.0-SNAPSHOT.jar target/mud_config.json 
