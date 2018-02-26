@@ -1,0 +1,28 @@
+{
+    "modules": [
+        "com.ayyoob.sdn.of.simulator.apps.MUDBasedIoTDeviceFlowBuilder"
+    ],
+
+    "statModules": [
+
+    ],
+
+    "switchConfig": {
+        "dpId" : "14:cc:20:51:33:ea",
+        "macAddress": "14:cc:20:51:33:ea",
+        "ipAddress": "192.168.1.1"
+    },
+
+    "logPacket":false,
+
+    "moduleConfig": {
+        "MUDBasedIoTDeviceFlowBuilder":{
+            "enable": true,
+            "device":"b4:75:0e:ec:e5:a9",
+            "deviceName": "belkinNetCam"
+        }
+
+    },
+
+    "pcapLocation": "/Users/ayyoobhamza/Desktop/unsw/mud/pcap/b4750eece5a9.pcap"
+}

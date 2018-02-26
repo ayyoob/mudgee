@@ -1,0 +1,19 @@
+# Mac
+.DS_Store
+
+# Ignore everything in this directory
+target
+result
+.classpath
+.settings
+.project
+*.iml
+*.iws
+*.ipr
+.idea/
+
+
+*.log
+*result.json
+*cap.pcap
+*result.html
