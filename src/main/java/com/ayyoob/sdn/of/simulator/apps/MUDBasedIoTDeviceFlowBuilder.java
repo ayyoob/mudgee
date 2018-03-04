@@ -882,6 +882,7 @@ public class MUDBasedIoTDeviceFlowBuilder implements ControllerApp {
 
         ofFlow = new OFFlow();
         ofFlow.setSrcMac(deviceMac);
+        ofFlow.setDstIp("239.255.255.250");
         ofFlow.setDstPort("1900");
         ofFlow.setEthType(Constants.ETH_TYPE_IPV4);
         ofFlow.setPriority(L2D_PRIORITY + 5);

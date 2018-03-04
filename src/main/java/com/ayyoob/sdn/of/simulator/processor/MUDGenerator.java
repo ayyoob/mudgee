@@ -212,7 +212,6 @@ public class MUDGenerator {
 			for (String key :fromDeviceMap.keySet()) {
 				OFFlow ofFlow = fromDeviceMap.get(key);
 				Set<String> dsts = new HashSet<String>(Arrays.asList(ofFlow.getDstIp().split("\\|")));
-
 				int ipCounter = 0;
 				for (String dstLocation : dsts) {
 					if (validIP(dstLocation)) {
@@ -316,6 +315,9 @@ public class MUDGenerator {
 				localString.add(LOCAL_TAG);
 				ietfMudMatch.setLocalNetworks(localString);
 				match.setIetfMudMatch(ietfMudMatch);
+				if (validIP(ofFlow.getDstIp())) {
+					ipv4Match.setDestinationIp(ofFlow.getDstIp() +"/32");
+				}
 			} else if (ofFlow.getDstIp().equals(defaultGatewayIp)) {
 				IetfMudMatch ietfMudMatch = new IetfMudMatch();
 				ietfMudMatch.setController(DEFAULTGATEWAYCONTROLLER);
