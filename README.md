@@ -1,11 +1,11 @@
-# MUD GENERATOR
-PCAP BASED MUD GENERATOR
+# MUDGEE
+Generate MUD Profiles using PCAP.
 
 # Installation
 
 ```sh
-$ git clone https://github.com/ayyoob/pcap-mud-generator.git
-$ cd pcap-mud-generator
+$ git clone https://github.com/ayyoob/mudgee.git
+$ cd mudgee
 $ mvn clean install
 ```
 Sample mud config is provided:
@@ -14,7 +14,7 @@ Sample mud config is provided:
 # Execute
 
 ```sh
-$ java -jar target/mud-generator-1.0.0-SNAPSHOT.jar target/mud_config.json 
+$ java -jar target/mudgee-1.0.0-SNAPSHOT.jar target/mud_config.json 
 ```
 
 After the execution, Check the result directory for the generated MUD.
