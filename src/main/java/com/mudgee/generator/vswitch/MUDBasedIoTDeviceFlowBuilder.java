@@ -32,7 +32,7 @@ import static com.mudgee.generator.Constants.*;
 public class MUDBasedIoTDeviceFlowBuilder implements ControllerApp {
 
     private static String ignoreMacPrefix[] = {"01:00:5E", "33:33", "FF:FF:FF"};
-    private static boolean skipIpFlows = true;
+    private static boolean skipIpFlows = false;
 
     private static final long MAX_FLOWS_PER_DEVICE = 500;
     private static final double MIN_FLOW_IMPACT_THRESHOLD = 5; //percentage
@@ -905,17 +905,6 @@ public class MUDBasedIoTDeviceFlowBuilder implements ControllerApp {
         ofFlow.setIpProto(Constants.UDP_PROTO);
         ofFlow.setOfAction(OFFlow.OFAction.NORMAL);
         OFController.getInstance().addFlow(dpId, ofFlow);
-
-        ofFlow = new OFFlow();
-        ofFlow.setDstMac(deviceMac);
-        ofFlow.setSrcIp("239.255.255.250");
-        ofFlow.setDstPort("1900");
-        ofFlow.setEthType(Constants.ETH_TYPE_IPV4);
-        ofFlow.setPriority(L2D_PRIORITY + 5);
-        ofFlow.setIpProto(Constants.UDP_PROTO);
-        ofFlow.setOfAction(OFFlow.OFAction.NORMAL);
-        OFController.getInstance().addFlow(dpId, ofFlow);
-
 
         ofFlow = new OFFlow();
         ofFlow.setDstMac(deviceMac);
