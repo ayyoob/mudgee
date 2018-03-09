@@ -68,7 +68,7 @@ public class Mudgee {
         OFController.getInstance().registerApps(new MUDBasedIoTDeviceFlowBuilder(), deviceConfig);
         final OFSwitch ofSwitch = new OFSwitch(dpId, macAddress, ipAddress);
         OFController.getInstance().addSwitch(ofSwitch);
-        processPcap(pcapLocation, ofSwitch);
+        //processPcap(pcapLocation, ofSwitch);
         OFController.getInstance().complete();
     }
 
@@ -113,20 +113,43 @@ public class Mudgee {
                     simPacket.setDstMac(header.getDstAddr().toString());
                     simPacket.setSize(packet.length());
                     simPacket.setEthType(header.getType().valueAsString());
-                    if (header.getType() == EtherType.IPV4) {
-                        IpV4Packet ipV4Packet = (IpV4Packet) packet.getPayload();
-                        IpV4Packet.IpV4Header ipV4Header = ipV4Packet.getHeader();
-                        simPacket.setSrcIp(ipV4Header.getSrcAddr().getHostAddress());
-                        simPacket.setDstIp(ipV4Header.getDstAddr().getHostAddress());
-                        simPacket.setIpProto(ipV4Header.getProtocol().valueAsString());
-                        if (ipV4Header.getProtocol().valueAsString().equals(IpNumber.TCP.valueAsString()) ) {
-                            TcpPacket tcpPacket = (TcpPacket) ipV4Packet.getPayload();
+                    if (header.getType() == EtherType.IPV4 || header.getType() == EtherType.IPV6) {
+                        String protocol;
+                        IpV6Packet ipV6Packet = null;
+                        IpV4Packet ipV4Packet = null;
+                        if (header.getType() == EtherType.IPV4) {
+                            ipV4Packet = (IpV4Packet) packet.getPayload();
+                            IpV4Packet.IpV4Header ipV4Header = ipV4Packet.getHeader();
+                            simPacket.setSrcIp(ipV4Header.getSrcAddr().getHostAddress());
+                            simPacket.setDstIp(ipV4Header.getDstAddr().getHostAddress());
+                            simPacket.setIpProto(ipV4Header.getProtocol().valueAsString());
+                            protocol = ipV4Header.getProtocol().valueAsString();
+                        } else {
+                            ipV6Packet = (IpV6Packet) packet.getPayload();
+                            IpV6Packet.IpV6Header ipV6Header = ipV6Packet.getHeader();
+                            simPacket.setSrcIp(ipV6Header.getSrcAddr().getHostAddress());
+                            simPacket.setDstIp(ipV6Header.getDstAddr().getHostAddress());
+                            simPacket.setIpProto(ipV6Header.getProtocol().valueAsString());
+                            protocol = ipV6Header.getProtocol().valueAsString();
+                        }
+                        if (protocol.equals(IpNumber.TCP.valueAsString()) ) {
+                            TcpPacket tcpPacket;
+                            if (header.getType() == EtherType.IPV4) {
+                                tcpPacket = (TcpPacket) ipV4Packet.getPayload();
+                            } else {
+                                tcpPacket = (TcpPacket) ipV6Packet.getPayload();
+                            }
                             simPacket.setSrcPort(tcpPacket.getHeader().getSrcPort().valueAsString());
                             simPacket.setDstPort(tcpPacket.getHeader().getDstPort().valueAsString());
                             simPacket.setTcpFlag(tcpPacket.getHeader().getSyn(),tcpPacket.getHeader().getAck());
 
-                        } else if (ipV4Header.getProtocol().valueAsString().equals(IpNumber.UDP.valueAsString()) ) {
-                            UdpPacket udpPacket = (UdpPacket) ipV4Packet.getPayload();
+                        } else if (protocol.equals(IpNumber.UDP.valueAsString()) ) {
+                            UdpPacket udpPacket;
+                            if (header.getType() == EtherType.IPV4) {
+                                udpPacket = (UdpPacket) ipV4Packet.getPayload();
+                            } else {
+                                udpPacket = (UdpPacket) ipV6Packet.getPayload();
+                            }
                             simPacket.setSrcPort(udpPacket.getHeader().getSrcPort().valueAsString());
                             simPacket.setDstPort(udpPacket.getHeader().getDstPort().valueAsString());
 
@@ -161,6 +184,18 @@ public class Mudgee {
                                     //ignore
                                 }
                             }
+                        } else if (protocol.equals(IpNumber.ICMPV4.valueAsString())) {
+                            IcmpV4CommonPacket icmpV4CommonPacket = (IcmpV4CommonPacket) ipV4Packet.getPayload();
+                            simPacket.setIcmpType(icmpV4CommonPacket.getHeader().getType().valueAsString());
+                            simPacket.setIcmpCode(icmpV4CommonPacket.getHeader().getCode().valueAsString());
+                            simPacket.setSrcPort("*");
+                            simPacket.setDstPort("*");
+                        } else if (protocol.equals(IpNumber.ICMPV6.valueAsString())) {
+                            IcmpV6CommonPacket icmpV6CommonPacket = (IcmpV6CommonPacket) ipV6Packet.getPayload();
+                            simPacket.setIcmpType(icmpV6CommonPacket.getHeader().getType().valueAsString());
+                            simPacket.setIcmpCode(icmpV6CommonPacket.getHeader().getCode().valueAsString());
+                            simPacket.setSrcPort("*");
+                            simPacket.setDstPort("*");
                         } else {
                             simPacket.setSrcPort("*");
                             simPacket.setDstPort("*");

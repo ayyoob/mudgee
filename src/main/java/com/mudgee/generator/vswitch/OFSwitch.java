@@ -27,7 +27,6 @@ public class OFSwitch {
     private long currentTime=0;
     private long lastPacketTime=0;
     private LinkedList<OFFlow> ofFlows = new LinkedList<OFFlow>();
-    private static String ignoreMacPrefix[] = {"01:00:5E", "33:33", "FF:FF:FF"};
 
     public void transmit(SimPacket packet) {
         currentTime = packet.getTimestamp();
@@ -158,6 +157,8 @@ public class OFSwitch {
             String ipProto=packet.getIpProto()== null ? "*": packet.getIpProto();
             String srcPort=packet.getSrcPort()== null ? "*": packet.getSrcPort();
             String dstPort=packet.getDstPort()== null ? "*": packet.getDstPort();
+            String icmpType=packet.getIcmpType()== null ? "*": packet.getIcmpType();
+            String icmpCode=packet.getIcmpCode()== null ? "*": packet.getIcmpCode();
 
             boolean condition = (srcMac.equals(flow.getSrcMac()) || flow.getSrcMac().equals("*"))&&
                     (dstMac.equals(flow.getDstMac())  || flow.getDstMac().equals("*"))&&
@@ -167,6 +168,8 @@ public class OFSwitch {
                     (dstIp.equals(flow.getDstIp())  || flow.getDstIp().equals("*"))&&
                     (ipProto.equals(flow.getIpProto())  || flow.getIpProto().equals("*"))&&
                     (srcPort.equals(flow.getSrcPort())  || flow.getSrcPort().equals("*"))&&
+                    (icmpType.equals(flow.getIcmpType())  || flow.getIcmpType().equals("*"))&&
+                    (icmpCode.equals(flow.getIcmpCode())  || flow.getIcmpCode().equals("*"))&&
                     (dstPort.equals(flow.getDstPort()) || flow.getDstPort().equals("*"));
 
             if (condition) {
@@ -184,14 +187,6 @@ public class OFSwitch {
         }
     }
 
-    private boolean isIgnored(String mac) {
-        for (String prefix : ignoreMacPrefix) {
-            if (mac.contains(prefix.toLowerCase())) {
-                return true;
-            }
-        }
-        return false;
-    }
 
     private void cleanIdleFlows() {
         for (int i = 0 ; i < ofFlows.size(); i++) {

@@ -30,6 +30,8 @@ public class OFFlow implements Serializable{
     private String ipProto="*";
     private String srcPort="*";
     private String dstPort="*";
+    private String icmpType="*";
+    private String icmpCode="*";
     //duration needs to be manually calculated from controller
     private long createdTimestamp;
     private OFAction ofAction;
@@ -51,6 +53,8 @@ public class OFFlow implements Serializable{
         ofFlow.setSrcPort(this.srcPort);
         ofFlow.setDstPort(this.dstPort);
         ofFlow.setPriority(this.priority);
+        ofFlow.setIcmpType(this.icmpType);
+        ofFlow.setIcmpCode(this.icmpCode);
         return ofFlow;
     }
 
@@ -183,6 +187,8 @@ public class OFFlow implements Serializable{
                 this.dstIp.equals(flow.getDstIp()) &&
                 this.ipProto.equals(flow.getIpProto()) &&
                 this.srcPort.equals(flow.getSrcPort()) &&
+                this.icmpType.equals(flow.getIcmpType()) &&
+                this.icmpCode.equals(flow.getIcmpCode()) &&
                 this.dstPort.equals(flow.getDstPort());
 
     }
@@ -211,22 +217,39 @@ public class OFFlow implements Serializable{
         this.lastPacketTransmittedTime = lastPacketTransmittedTime;
     }
 
+    public String getIcmpType() {
+        return icmpType;
+    }
+
+    public void setIcmpType(String icmpType) {
+        this.icmpType = icmpType;
+    }
+
+    public String getIcmpCode() {
+        return icmpCode;
+    }
+
+    public void setIcmpCode(String icmpCode) {
+        this.icmpCode = icmpCode;
+    }
+
     public String getFlowHeaderString() {
-        return "srcMac,dstMac,ethType,vlanId,srcIp,dstIp,ipProto,srcPort,dstPort,priority,volumeTransmitted,packetCount";
+        return "srcMac,dstMac,ethType,vlanId,srcIp,dstIp,ipProto,srcPort,dstPort,priority,icmpType,icmpCode,volumeTransmitted,packetCount";
     }
 
     public String getFlowString() {
         return srcMac + "," + dstMac + "," + ethType + "," + vlanId + "," + srcIp + "," + dstIp + ","
-                + ipProto + "," + srcPort + "," + dstPort + "," + priority + "," + volumeTransmitted + "," + packetCount;
+                + ipProto + "," + srcPort + "," + dstPort + "," + priority + "," + icmpType + "," + icmpCode
+                + "," + volumeTransmitted + "," + packetCount;
     }
 
     public String getFlowHeaderWithoutFlowStat() {
-        return "srcMac,dstMac,ethType,vlanId,srcIp,dstIp,ipProto,srcPort,dstPort,priority";
+        return "srcMac,dstMac,ethType,vlanId,srcIp,dstIp,ipProto,srcPort,dstPort,priority,icmpType,icmpCode";
     }
 
     public String getFlowStringWithoutFlowStat() {
         return srcMac + "," + dstMac + "," + ethType + "," + vlanId + "," + srcIp + "," + dstIp + ","
-                + ipProto + "," + srcPort + "," + dstPort + "," + priority;
+                + ipProto + "," + srcPort + "," + dstPort + "," + priority + "," + icmpType + "," + icmpCode ;
     }
 
 }

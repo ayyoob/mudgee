@@ -5,9 +5,9 @@
     },
 
     "deviceConfig":{
-        "device":"ec:1a:59:79:f4:89",
-        "deviceName": "wemoswitch"
+        "device":"44:65:0d:56:cc:d3",
+        "deviceName": "amazonEcho"
     },
 
-    "pcapLocation": "/Users/ayyoobhamza/Desktop/unsw/mud/pcap/ec1a5979f489.pcap"
+    "pcapLocation": "/Users/ayyoobhamza/Desktop/unsw/mud/pcap/44650d56ccd3.pcap"
 }

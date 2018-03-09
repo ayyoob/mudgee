@@ -25,7 +25,23 @@ public class Constants {
     public static final String UDP_PROTO = "17";
     public static final String ICMP_PROTO = "1";
     public static final String ETH_TYPE_IPV4 = "0x0800";
+    public static final String ETH_TYPE_IPV6 = "0x86dd";
     public static final String ETH_TYPE_ARP = "0x0806";
 
+    public static final int COMMON_FLOW_PRIORITY = 1000;
+    public static final int D2G_FIXED_FLOW_PRIORITY = 850;
+    public static final int D2G_FIXED_FLOW_INITIALIZED_PRIORITY = 855;
+    public static final int D2G_DYNAMIC_FLOW_PRIORITY = 810;
+    public static final int D2G_PRIORITY = 800;
+    public static final int G2D_FIXED_FLOW_INITIALIZED_PRIORITY = 755;
+    public static final int G2D_FIXED_FLOW_PRIORITY = 750;
+    public static final int G2D_DYNAMIC_FLOW_PRIORITY = 710;
+    public static final int G2D_PRIORITY = 700;
+    public static final int L2D_FIXED_FLOW_PRIORITY = 650;
+    public static final int L2D_FIXED_FLOW_INIALIZED_PRIORITY = 655;
+    public static final int L2D_DYNAMIC_FLOW_PRIORITY = 610;
+    public static final int L2D_PRIORITY = 600;
+    public static final int SKIP_FLOW_PRIORITY = 400;
+    public static final int SKIP_FLOW_HIGHER_PRIORITY = 950;
 
 }

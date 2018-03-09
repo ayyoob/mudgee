@@ -26,26 +26,82 @@ public class Match {
 	@JsonProperty("ietf-mud:mud")
 	private IetfMudMatch ietfMudMatch;
 
-	@JsonProperty("l3")
-	private L3Match l3Match;
+	@JsonProperty("ipv4")
+	private IPV4Match ipv4Match;
 
-	@JsonProperty("l4")
-	private L4Match l4Match;
+	@JsonProperty("ipv6")
+	private IPV6Match ipv6Match;
 
-	public L3Match getL3Match() {
-		return l3Match;
+	@JsonProperty("udp")
+	private UdpMatch udpMatch;
+
+	@JsonProperty("tcp")
+	private TcpMatch tcpMatch;
+
+	@JsonProperty("icmp")
+	private IcmpMatch icmpMatch;
+
+	public UdpMatch getUdpMatch() {
+		return udpMatch;
 	}
 
-	public void setL3Match(L3Match l3Match) {
-		this.l3Match = l3Match;
+	public void setUdpMatch(UdpMatch udpMatch) {
+		this.udpMatch = udpMatch;
 	}
 
-	public L4Match getL4Match() {
-		return l4Match;
+	public TcpMatch getTcpMatch() {
+		return tcpMatch;
 	}
 
-	public void setL4Match(L4Match l4Match) {
-		this.l4Match = l4Match;
+	public void setTcpMatch(TcpMatch tcpMatch) {
+		this.tcpMatch = tcpMatch;
+	}
+
+	public IPV4Match getIpv4Match() {
+		return ipv4Match;
+	}
+
+	public void setIpv4Match(IPV4Match ipv4Match) {
+		this.ipv4Match = ipv4Match;
+	}
+
+	public IcmpMatch getIcmpMatch() {
+		return icmpMatch;
+	}
+
+	public void setIcmpMatch(IcmpMatch icmpMatch) {
+		this.icmpMatch = icmpMatch;
+	}
+
+	//	@JsonProperty("l3")
+//	private L3Match l3Match;
+//
+//	@JsonProperty("l4")
+//	private L4Match l4Match;
+//
+//	public L3Match getL3Match() {
+//		return l3Match;
+//	}
+//
+//	public void setL3Match(L3Match l3Match) {
+//		this.l3Match = l3Match;
+//	}
+//
+//	public L4Match getL4Match() {
+//		return l4Match;
+//	}
+//
+//	public void setL4Match(L4Match l4Match) {
+//		this.l4Match = l4Match;
+//	}
+
+
+	public IPV6Match getIpv6Match() {
+		return ipv6Match;
+	}
+
+	public void setIpv6Match(IPV6Match ipv6Match) {
+		this.ipv6Match = ipv6Match;
 	}
 
 	public IetfMudMatch getIetfMudMatch() {

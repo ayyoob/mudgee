@@ -21,27 +21,27 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class UdpMatch {
+public class IcmpMatch {
 
-	@JsonProperty("destination-port")
-	private PortMatch destinationPortMatch;
+	@JsonProperty("type")
+	private int type;
 
-	@JsonProperty("source-port")
-	private PortMatch sourcePortMatch;
+	@JsonProperty("code")
+	private int code;
 
-	public PortMatch getDestinationPortMatch() {
-		return destinationPortMatch;
+	public int getType() {
+		return type;
 	}
 
-	public void setDestinationPortMatch(PortMatch destinationPortMatch) {
-		this.destinationPortMatch = destinationPortMatch;
+	public void setType(int type) {
+		this.type = type;
 	}
 
-	public PortMatch getSourcePortMatch() {
-		return sourcePortMatch;
+	public int getCode() {
+		return code;
 	}
 
-	public void setSourcePortMatch(PortMatch sourcePortMatch) {
-		this.sourcePortMatch = sourcePortMatch;
+	public void setCode(int code) {
+		this.code = code;
 	}
 }

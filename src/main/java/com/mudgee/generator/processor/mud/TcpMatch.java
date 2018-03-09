@@ -22,10 +22,13 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class TcpMatch {
 
-	@JsonProperty("destination-port-range-or-operator")
+	@JsonProperty("destination-port")
 	private PortMatch destinationPortMatch;
 
-	@JsonProperty("source-port-range-or-operator")
+	@JsonProperty("ietf-mud:direction-initiated")
+	private String directionInitialized;
+
+	@JsonProperty("source-port")
 	private PortMatch sourcePortMatch;
 
 	public PortMatch getDestinationPortMatch() {
@@ -42,5 +45,13 @@ public class TcpMatch {
 
 	public void setSourcePortMatch(PortMatch sourcePortMatch) {
 		this.sourcePortMatch = sourcePortMatch;
+	}
+
+	public String getDirectionInitialized() {
+		return directionInitialized;
+	}
+
+	public void setDirectionInitialized(String directionInitialized) {
+		this.directionInitialized = directionInitialized;
 	}
 }
