@@ -143,6 +143,8 @@ public class OFSwitch {
     public void clearAllFlows() {
         ofFlows = new LinkedList<OFFlow>();
         ofFlows.add(getDefaultFlow());
+        currentTime = 0;
+        lastPacketTime = 0;
     }
 
     private OFFlow getMatchingFlow(SimPacket packet) {

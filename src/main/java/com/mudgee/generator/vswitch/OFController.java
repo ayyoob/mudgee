@@ -59,6 +59,10 @@ public class OFController {
         controllerApp.init(argument);
     }
 
+    public void removeApps() {
+        registeredApps.clear();
+    }
+
     public List<OFFlow> getAllFlows(String dpId) {
         return ofSwitchMap.get(dpId.toLowerCase()).getAllFlows();
     }

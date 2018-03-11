@@ -23,10 +23,16 @@ public class Constants {
     public static final String NTP_PORT = "123";
     public static final String TCP_PROTO = "6";
     public static final String UDP_PROTO = "17";
+    public static final String IGMP_PROTO = "2";
     public static final String ICMP_PROTO = "1";
+    public static final String IPV6_ICMP_PROTO = "58";
     public static final String ETH_TYPE_IPV4 = "0x0800";
     public static final String ETH_TYPE_IPV6 = "0x86dd";
     public static final String ETH_TYPE_ARP = "0x0806";
+    public static final String ETH_TYPE_EAPOL = "0x888e";
+
+    public static final String ICMP_ECHO_TYPE = "8";
+    public static final String ICMP_ECHO_REPLY_TYPE = "0";
 
     public static final int COMMON_FLOW_PRIORITY = 1000;
     public static final int D2G_FIXED_FLOW_PRIORITY = 850;
@@ -43,5 +49,9 @@ public class Constants {
     public static final int L2D_PRIORITY = 600;
     public static final int SKIP_FLOW_PRIORITY = 400;
     public static final int SKIP_FLOW_HIGHER_PRIORITY = 950;
+    public static final int MULTICAST_BROADCAST_PRIORITY = 1300;
+    public static final int ALL_DEVICE_COMMON_PRIORITY = 1400;
+
+    public static final String BROADCAST_MAC = "ff:ff:ff:ff:ff:ff";
 
 }

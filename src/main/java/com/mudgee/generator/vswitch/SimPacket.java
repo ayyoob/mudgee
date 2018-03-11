@@ -175,7 +175,7 @@ public class SimPacket {
     }
 
     public void print() {
-        System.out.println("size, srcMac, dstMac, ethType, srcIp, dstIp, ipProto, srcPort, dstPort,icmpCode, icmpType,timestamp");
+        System.out.println("size, srcMac, dstMac, ethType, srcIp, dstIp, ipProto, srcPort, dstPort,icmpCode,icmpType,timestamp");
         System.out.println(size + "," + srcMac + "," + dstMac + "," + ethType + "," + srcIp + "," + dstIp
                 + "," + ipProto + "," + srcPort + "," + dstPort + "," + icmpCode + "," + icmpType + "," + timestamp);
     }

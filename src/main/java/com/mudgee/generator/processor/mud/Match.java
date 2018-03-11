@@ -41,6 +41,9 @@ public class Match {
 	@JsonProperty("icmp")
 	private IcmpMatch icmpMatch;
 
+	@JsonProperty("eth")
+	private EthMatch ethMatch;
+
 	public UdpMatch getUdpMatch() {
 		return udpMatch;
 	}
@@ -95,6 +98,14 @@ public class Match {
 //		this.l4Match = l4Match;
 //	}
 
+
+	public EthMatch getEthMatch() {
+		return ethMatch;
+	}
+
+	public void setEthMatch(EthMatch ethMatch) {
+		this.ethMatch = ethMatch;
+	}
 
 	public IPV6Match getIpv6Match() {
 		return ipv6Match;

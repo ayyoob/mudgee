@@ -24,6 +24,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import org.json.simple.JSONObject;
 
 import java.io.*;
+import java.math.BigInteger;
 import java.nio.file.Paths;
 import java.util.*;
 
@@ -31,24 +32,24 @@ import static com.mudgee.generator.Constants.*;
 
 public class MUDBasedIoTDeviceFlowBuilder implements ControllerApp {
 
-    private static String ignoreMacPrefix[] = {"01:00:5E", "33:33", "FF:FF:FF"};
     private static boolean skipIpFlows = false;
 
     private static final long MAX_FLOWS_PER_DEVICE = 500;
     private static final double MIN_FLOW_IMPACT_THRESHOLD = 5; //percentage
     private static final long MIN_TIME_FOR_FLOWS_MILLI_SECONDS = 120000;
 
-    private static boolean enabled = true;
-    private static List<String> devices = new ArrayList<>();
-    private static Map<String, Map<String, Set<String>>> deviceDnsMap = new HashMap<>();
+    private boolean enabled = true;
+    private List<String> devices;
+    private Map<String, Map<String, Set<String>>> deviceDnsMap = new HashMap<>();
     private long startTime = -1;
     private String deviceName;
 
     public void init(JSONObject jsonObject) {
         String device = (String) jsonObject.get("device");
         deviceName = (String) jsonObject.get("deviceName");
-        System.out.println("Generating MUD Profiles for " + deviceName);
-        devices.add(device);
+        System.out.println("Generating MUD Profiles for " + deviceName + " for device id" + device);
+        devices = new ArrayList<>();
+        devices.add(device.toLowerCase());
     }
 
     public void process(String dpId, SimPacket packet) {
@@ -56,7 +57,32 @@ public class MUDBasedIoTDeviceFlowBuilder implements ControllerApp {
             startTime = OFController.getInstance().getSwitch(dpId).getCurrentTime();
 
         }
+        if (packet.getEthType().equals(Constants.ETH_TYPE_EAPOL)) {
+            OFFlow ofFlow = new OFFlow();
+            ofFlow.setEthType(Constants.ETH_TYPE_EAPOL);
+            ofFlow.setOfAction(OFFlow.OFAction.NORMAL);
+            ofFlow.setPriority(Constants.ALL_DEVICE_COMMON_PRIORITY);
+            OFController.getInstance().addFlow(dpId, ofFlow);
+        }
         if (isIgnored(packet.getSrcMac()) || isIgnored(packet.getDstMac())) {
+            if (isIgnored(packet.getDstMac()) && devices.contains(packet.getSrcMac())) {
+                OFFlow ofFlow = new OFFlow();
+                ofFlow.setSrcMac(packet.getSrcMac());
+                if (packet.getDstMac().equals("ff:ff:ff:ff:ff:ff")) {
+                    ofFlow.setDstMac(packet.getDstMac());
+                }
+                if (packet.getDstIp() != null) {
+                    ofFlow.setDstIp(packet.getDstIp());
+                }
+                ofFlow.setEthType(packet.getEthType());
+                if (packet.getDstPort() != null) {
+                    ofFlow.setDstPort(packet.getDstPort());
+                }
+                ofFlow.setIpProto(packet.getIpProto());
+                ofFlow.setPriority(Constants.MULTICAST_BROADCAST_PRIORITY);
+                ofFlow.setOfAction(OFFlow.OFAction.NORMAL);
+                OFController.getInstance().addFlow(dpId, ofFlow);
+            }
             return;
         }
         String srcMac = packet.getSrcMac();
@@ -101,7 +127,8 @@ public class MUDBasedIoTDeviceFlowBuilder implements ControllerApp {
 
             }
             deviceDnsMap.put(packet.getDstMac(), dnsMap);
-        } else if (packet.getDstMac().equals(ofSwitch.getMacAddress()) && packet.getIpProto().equals(Constants.ICMP_PROTO)) {
+        } else if (packet.getDstMac().equals(ofSwitch.getMacAddress()) && packet.getIpProto()!=null &&
+                (packet.getIpProto().equals(Constants.ICMP_PROTO) || packet.getIpProto().equals(Constants.IPV6_ICMP_PROTO))) {
             OFFlow ofFlow = new OFFlow();
             ofFlow.setSrcMac(packet.getSrcMac());
             ofFlow.setDstMac(ofSwitch.getMacAddress());
@@ -126,7 +153,7 @@ public class MUDBasedIoTDeviceFlowBuilder implements ControllerApp {
             }
 
             OFController.getInstance().addFlow(dpId, ofFlow);
-        } else if (packet.getDstMac().equals(ofSwitch.getMacAddress()) && packet.getIpProto().equals(Constants.UDP_PROTO) &&
+        } else if (packet.getDstMac().equals(ofSwitch.getMacAddress()) && packet.getIpProto()!=null && packet.getIpProto().equals(Constants.UDP_PROTO) &&
                 (packet.getDstPort().equals(Constants.DNS_PORT) || packet.getDstPort().equals(Constants.NTP_PORT))) {
             OFFlow ofFlow = new OFFlow();
             ofFlow.setSrcMac(packet.getSrcMac());
@@ -156,7 +183,7 @@ public class MUDBasedIoTDeviceFlowBuilder implements ControllerApp {
             }
 
             OFController.getInstance().addFlow(dpId, ofFlow);
-        } else {
+        } else if (packet.getIpProto()!=null) {
             String dstIp = packet.getDstIp();
             String srcIp = packet.getSrcIp();
             String protocol = packet.getIpProto();
@@ -715,8 +742,10 @@ public class MUDBasedIoTDeviceFlowBuilder implements ControllerApp {
     }
 
     private boolean isIgnored(String mac) {
-        for (String prefix : ignoreMacPrefix) {
-            if (mac.contains(prefix.toLowerCase())) {
+        if (mac.length() == Constants.BROADCAST_MAC.length()) {
+            String mostSignificantByte = mac.split(":")[0];
+            String binary = new BigInteger(mostSignificantByte, 16).toString(2);
+            if (mac.equals(Constants.BROADCAST_MAC) || binary.charAt(binary.length() -1) == '1') {
                 return true;
             }
         }
@@ -822,6 +851,15 @@ public class MUDBasedIoTDeviceFlowBuilder implements ControllerApp {
         OFController.getInstance().addFlow(dpId, ofFlow);
 
         ofFlow = new OFFlow();
+        ofFlow.setSrcMac(deviceMac);
+        ofFlow.setDstMac(gwMac);
+        ofFlow.setIpProto(Constants.IPV6_ICMP_PROTO);
+        ofFlow.setEthType(Constants.ETH_TYPE_IPV6);
+        ofFlow.setPriority(COMMON_FLOW_PRIORITY);
+        ofFlow.setOfAction(OFFlow.OFAction.MIRROR_TO_CONTROLLER);
+        OFController.getInstance().addFlow(dpId, ofFlow);
+
+        ofFlow = new OFFlow();
         ofFlow.setSrcMac(gwMac);
         ofFlow.setDstMac(deviceMac);
         ofFlow.setIpProto(Constants.ICMP_PROTO);
@@ -834,6 +872,15 @@ public class MUDBasedIoTDeviceFlowBuilder implements ControllerApp {
         ofFlow.setSrcMac(gwMac);
         ofFlow.setDstMac(deviceMac);
         ofFlow.setIpProto(Constants.ICMP_PROTO);
+        ofFlow.setEthType(Constants.ETH_TYPE_IPV6);
+        ofFlow.setPriority(COMMON_FLOW_PRIORITY);
+        ofFlow.setOfAction(OFFlow.OFAction.NORMAL);
+        OFController.getInstance().addFlow(dpId, ofFlow);
+
+        ofFlow = new OFFlow();
+        ofFlow.setSrcMac(gwMac);
+        ofFlow.setDstMac(deviceMac);
+        ofFlow.setIpProto(Constants.IPV6_ICMP_PROTO);
         ofFlow.setEthType(Constants.ETH_TYPE_IPV6);
         ofFlow.setPriority(COMMON_FLOW_PRIORITY);
         ofFlow.setOfAction(OFFlow.OFAction.NORMAL);
@@ -896,15 +943,24 @@ public class MUDBasedIoTDeviceFlowBuilder implements ControllerApp {
         ofFlow.setOfAction(OFFlow.OFAction.MIRROR_TO_CONTROLLER);
         OFController.getInstance().addFlow(dpId, ofFlow);
 
-        ofFlow = new OFFlow();
-        ofFlow.setSrcMac(deviceMac);
-        ofFlow.setDstIp("239.255.255.250");
-        ofFlow.setDstPort("1900");
-        ofFlow.setEthType(Constants.ETH_TYPE_IPV4);
-        ofFlow.setPriority(L2D_PRIORITY + 5);
-        ofFlow.setIpProto(Constants.UDP_PROTO);
-        ofFlow.setOfAction(OFFlow.OFAction.NORMAL);
-        OFController.getInstance().addFlow(dpId, ofFlow);
+//        ofFlow = new OFFlow();
+//        ofFlow.setSrcMac(deviceMac);
+//        ofFlow.setDstIp("239.255.255.250");
+//        ofFlow.setDstPort("1900");
+//        ofFlow.setEthType(Constants.ETH_TYPE_IPV4);
+//        ofFlow.setPriority(L2D_PRIORITY + 5);
+//        ofFlow.setIpProto(Constants.UDP_PROTO);
+//        ofFlow.setOfAction(OFFlow.OFAction.NORMAL);
+//        OFController.getInstance().addFlow(dpId, ofFlow);
+//
+//        ofFlow = new OFFlow();
+//        ofFlow.setSrcMac(deviceMac);
+//        ofFlow.setDstIp("239.255.255.250");
+//        ofFlow.setEthType(Constants.ETH_TYPE_IPV4);
+//        ofFlow.setPriority(L2D_PRIORITY + 5);
+//        ofFlow.setIpProto(Constants.IGMP_PROTO);
+//        ofFlow.setOfAction(OFFlow.OFAction.NORMAL);
+//        OFController.getInstance().addFlow(dpId, ofFlow);
 
         ofFlow = new OFFlow();
         ofFlow.setDstMac(deviceMac);
@@ -923,17 +979,17 @@ public class MUDBasedIoTDeviceFlowBuilder implements ControllerApp {
         OFController.getInstance().addFlow(dpId, ofFlow);
 
 
-        ofFlow = new OFFlow();
-        ofFlow.setDstMac(deviceMac);
-        ofFlow.setPriority(SKIP_FLOW_PRIORITY);
-        ofFlow.setOfAction(OFFlow.OFAction.NORMAL);
-        OFController.getInstance().addFlow(dpId, ofFlow);
-
-        ofFlow = new OFFlow();
-        ofFlow.setSrcMac(deviceMac);
-        ofFlow.setPriority(SKIP_FLOW_PRIORITY);
-        ofFlow.setOfAction(OFFlow.OFAction.NORMAL);
-        OFController.getInstance().addFlow(dpId, ofFlow);
+//        ofFlow = new OFFlow();
+//        ofFlow.setDstMac(deviceMac);
+//        ofFlow.setPriority(SKIP_FLOW_PRIORITY);
+//        ofFlow.setOfAction(OFFlow.OFAction.NORMAL);
+//        OFController.getInstance().addFlow(dpId, ofFlow);
+//
+//        ofFlow = new OFFlow();
+//        ofFlow.setSrcMac(deviceMac);
+//        ofFlow.setPriority(SKIP_FLOW_PRIORITY);
+//        ofFlow.setOfAction(OFFlow.OFAction.NORMAL);
+//        OFController.getInstance().addFlow(dpId, ofFlow);
     }
 
     public void complete() {

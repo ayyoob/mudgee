@@ -27,6 +27,9 @@ import java.io.*;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 import java.util.stream.IntStream;
 
 import static com.mudgee.generator.Constants.*;
@@ -41,6 +44,20 @@ public class MUDGenerator {
 	// this is used to filter packet that was generated through other means such probing or attacking.
 	private static final int MIN_PACKET_COUNT_THRESHOLD = 5;
 	private static int ALLOWED_ICMP_TYPES[] = {8};
+	private static Pattern VALID_IPV4_PATTERN = null;
+	private static Pattern VALID_IPV6_PATTERN = null;
+	private static final String ipv4Pattern = "(([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\.){3}([01]?\\d\\d?|2[0-4]\\d|25[0-5])";
+	private static final String ipv6Pattern = "([0-9a-f]{1,4}:){7}([0-9a-f]){1,4}";
+
+	static {
+		try {
+			VALID_IPV4_PATTERN = Pattern.compile(ipv4Pattern, Pattern.CASE_INSENSITIVE);
+			VALID_IPV6_PATTERN = Pattern.compile(ipv6Pattern, Pattern.CASE_INSENSITIVE);
+		} catch (PatternSyntaxException e) {
+			//logger.severe("Unable to compile pattern", e);
+		}
+	}
+
 
 	public static void generate(String deviceName, String deviceMac, String defaultGatewayIp)
 			throws JsonProcessingException, FileNotFoundException, UnsupportedEncodingException {
@@ -90,7 +107,8 @@ public class MUDGenerator {
 					ofFlow.setIcmpCode(vals[11]);
 					ofFlow.setVolumeTransmitted(Long.parseLong(vals[12]));
 					ofFlow.setPacketCount(Long.parseLong(vals[13]));
-					if (ofFlow.getPriority() == COMMON_FLOW_PRIORITY || ofFlow.getPriority() == D2G_PRIORITY
+					if ( ofFlow.getPriority() == COMMON_FLOW_PRIORITY
+							|| ofFlow.getPriority() == D2G_PRIORITY
 							|| ofFlow.getPriority() == G2D_PRIORITY || ofFlow.getPriority() == L2D_PRIORITY) {
 						//ignore
 					} else {
@@ -100,9 +118,12 @@ public class MUDGenerator {
 									.noneMatch(x -> x == Integer.parseInt(ofFlow.getIcmpType()))) {
 								continue;
 							}
-							String key = ofFlow.getIpProto() + "|" + ofFlow.getDstPort()
+							String key = ofFlow.getEthType() + "|" + ofFlow.getIpProto() + "|" + ofFlow.getDstPort()
 									+ "|" + ofFlow.getIcmpCode() + "|" + ofFlow.getIcmpType();
-							if (validIP(ofFlow.getDstIp()) && ofFlow.getPacketCount() < MIN_PACKET_COUNT_THRESHOLD) {
+							if ((validIP(ofFlow.getDstIp()) || ofFlow.getDstMac().equals(Constants.BROADCAST_MAC)
+							||!ofFlow.getEthType().equals(Constants.ETH_TYPE_IPV4)
+									|| !ofFlow.getEthType().equals(Constants.ETH_TYPE_IPV6))
+									&& ofFlow.getPacketCount() <= MIN_PACKET_COUNT_THRESHOLD) {
 								continue;
 							}
 							OFFlow flow = commonFlowMap.get(key);
@@ -113,7 +134,7 @@ public class MUDGenerator {
 								commonFlowMap.put(key, flow);
 							}
 						} else if (ofFlow.getPriority() > D2G_PRIORITY && ofFlow.getPriority() < D2G_PRIORITY + 100) {
-							if (validIP(ofFlow.getDstIp()) && ofFlow.getPacketCount() == 0) {
+							if (validIP(ofFlow.getDstIp()) && ofFlow.getPacketCount() <= MIN_PACKET_COUNT_THRESHOLD) {
 								continue;
 							}
 							String key = ofFlow.getIpProto() + "|" + ofFlow.getDstPort() + "|" + ofFlow.getSrcPort();
@@ -141,7 +162,7 @@ public class MUDGenerator {
 								fromDeviceMap.put(key, flow);
 							}
 						} else if (ofFlow.getPriority() > G2D_PRIORITY && ofFlow.getPriority() < G2D_PRIORITY + 100) {
-							if (validIP(ofFlow.getSrcIp()) && ofFlow.getPacketCount() == 0) {
+							if (validIP(ofFlow.getSrcIp()) && ofFlow.getPacketCount() <= MIN_PACKET_COUNT_THRESHOLD) {
 								continue;
 							}
 							String key = ofFlow.getIpProto() + "|" + ofFlow.getDstPort() + "|" + ofFlow.getSrcPort();
@@ -191,6 +212,15 @@ public class MUDGenerator {
 				Set<String> dsts = new HashSet<String>(Arrays.asList(ofFlow.getDstIp().split("\\|")));
 				for (String dstLocation : dsts) {
 					OFFlow deviceFlow = ofFlow.copy();
+					if (deviceFlow.getPriority() == Constants.MULTICAST_BROADCAST_PRIORITY) {
+						deviceFlow.setSrcMac(DEVICETAG);
+						deviceFlow.setDstIp(dstLocation);
+						if (!ofFlow.getDstMac().equals(Constants.BROADCAST_MAC)) {
+							deviceFlow.setDstMac("*");
+						}
+						fromDevice.add(deviceFlow);
+						continue;
+					}
 					deviceFlow.setSrcMac(DEVICETAG);
 					deviceFlow.setDstMac(GATEWAYTAG);
 					deviceFlow.setDstIp(dstLocation);
@@ -203,6 +233,9 @@ public class MUDGenerator {
 					reverseFlow.setDstIp(deviceFlow.getSrcIp());
 					reverseFlow.setSrcPort(deviceFlow.getDstPort());
 					reverseFlow.setDstPort(deviceFlow.getSrcPort());
+					if (reverseFlow.getIcmpType().equals(Constants.ICMP_ECHO_TYPE)) {
+						reverseFlow.setIcmpType(Constants.ICMP_ECHO_REPLY_TYPE);
+					}
 					toDevice.add(reverseFlow);
 				}
 			}
@@ -451,11 +484,14 @@ public class MUDGenerator {
 			Match match = new Match();
 
 			//L3Match l3Match = new L3Match();
-			IPV4Match ipv4Match = new IPV4Match();
-			ipv4Match.setProtocol(Integer.parseInt(ofFlow.getIpProto()));
-
-			IPV6Match ipv6Match = new IPV6Match();
-			ipv6Match.setProtocol(Integer.parseInt(ofFlow.getIpProto()));
+			IPV4Match ipv4Match = null;
+			IPV6Match ipv6Match = null;
+			if (ofFlow.getIpProto() != null && !ofFlow.getIpProto().equals("*")) {
+				ipv4Match = new IPV4Match();
+				ipv6Match = new IPV6Match();
+				ipv4Match.setProtocol(Integer.parseInt(ofFlow.getIpProto()));
+				ipv6Match.setProtocol(Integer.parseInt(ofFlow.getIpProto()));
+			}
 
 			if (!ofFlow.getDstMac().equals(GATEWAYTAG)) {
 				IetfMudMatch ietfMudMatch = new IetfMudMatch();
@@ -467,8 +503,14 @@ public class MUDGenerator {
 				if (validIP(ofFlow.getDstIp())) {
 					ipv4Match.setDestinationIp(ofFlow.getDstIp() + "/32");
 					if (ofFlow.getEthType().equals(Constants.ETH_TYPE_IPV6)) {
-						ipv6Match.setDestinationIp(ofFlow.getDstIp() + "/32");
+						ipv6Match.setDestinationIp(ofFlow.getDstIp());
 					}
+				}
+				if (ofFlow.getDstMac().equals(Constants.BROADCAST_MAC)) {
+					EthMatch ethMatch = new EthMatch();
+					ethMatch.setEtherType(ofFlow.getEthType());
+					ethMatch.setDstMacAddress(ofFlow.getDstMac());
+					match.setEthMatch(ethMatch);
 				}
 			} else if (ofFlow.getDstIp().equals(defaultGatewayIp)) {
 				IetfMudMatch ietfMudMatch = new IetfMudMatch();
@@ -541,23 +583,25 @@ public class MUDGenerator {
 		List<Ace> aceList = new ArrayList<>();
 		int id = 0;
 		for (OFFlow ofFlow : toDevice) {
-			Ace ace = new Ace();
-			ace.setName(toId + "-" + id);
 			if (ipv6 && !ofFlow.getEthType().equals(Constants.ETH_TYPE_IPV6)) {
 				continue;
 			} else if (!ipv6 && ofFlow.getEthType().equals(Constants.ETH_TYPE_IPV6)) {
 				continue;
 			}
-
+			Ace ace = new Ace();
+			ace.setName(toId + "-" + id);
 			Actions actions = new Actions();
 			actions.setForwarding("accept");
 			ace.setActions(actions);
 			//L3Match l3Match = new L3Match();
-			IPV4Match ipv4Match = new IPV4Match();
-			ipv4Match.setProtocol(Integer.parseInt(ofFlow.getIpProto()));
-
-			IPV6Match ipv6Match = new IPV6Match();
-			ipv6Match.setProtocol(Integer.parseInt(ofFlow.getIpProto()));
+			IPV4Match ipv4Match = null;
+			IPV6Match ipv6Match = null;
+			if (ofFlow.getIpProto() != null && !ofFlow.getIpProto().equals("*")) {
+				ipv4Match = new IPV4Match();
+				ipv6Match = new IPV6Match();
+				ipv4Match.setProtocol(Integer.parseInt(ofFlow.getIpProto()));
+				ipv6Match.setProtocol(Integer.parseInt(ofFlow.getIpProto()));
+			}
 
 			Match match = new Match();
 			if (!ofFlow.getSrcMac().equals(GATEWAYTAG)) {
@@ -575,7 +619,7 @@ public class MUDGenerator {
 				if (validIP(ofFlow.getSrcIp())) {
 					ipv4Match.setSourceIp(ofFlow.getSrcIp() + "/32");
 					if (ofFlow.getEthType().equals(Constants.ETH_TYPE_IPV6)) {
-						ipv6Match.setSourceIp(ofFlow.getSrcIp() + "/32");
+						ipv6Match.setSourceIp(ofFlow.getSrcIp());
 					}
 				} else if (!ofFlow.getSrcIp().equals("*")) {
 					ipv4Match.setSrcDnsName(ofFlow.getSrcIp());
@@ -586,10 +630,11 @@ public class MUDGenerator {
 			}
 			//l3Match.setIpv4Match(ipv4Match);
 			if (ofFlow.getEthType().equals(Constants.ETH_TYPE_IPV6)) {
-				match.setIpv4Match(ipv4Match);
+				match.setIpv6Match(ipv6Match);
 			} else {
 				match.setIpv4Match(ipv4Match);
 			}
+
 
 			if (ofFlow.getIpProto().equals(Constants.TCP_PROTO)) {
 				L4Match l4Match = new L4Match();
@@ -635,28 +680,13 @@ public class MUDGenerator {
 		return aceList;
 	}
 
-	private static boolean validIP(String ip) {
-		try {
-			if (ip == null || ip.isEmpty()) {
-				return false;
-			}
-			String[] parts = ip.split("\\.");
-			if (parts.length != 4) {
-				return false;
-			}
-			for (String s : parts) {
-				int i = Integer.parseInt(s);
-				if ((i < 0) || (i > 255)) {
-					return false;
-				}
-			}
-			if (ip.endsWith(".")) {
-				return false;
-			}
+	private static boolean validIP(String ipAddress) {
+		Matcher m1 = VALID_IPV4_PATTERN.matcher(ipAddress);
+		if (m1.matches()) {
 			return true;
-		} catch (NumberFormatException nfe) {
-			return false;
 		}
+		Matcher m2 = VALID_IPV6_PATTERN.matcher(ipAddress);
+		return m2.matches();
 	}
 
 	private static PortMatch getPortMatch(String port) {

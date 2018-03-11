@@ -113,6 +113,7 @@ public class Mudgee {
                     simPacket.setDstMac(header.getDstAddr().toString());
                     simPacket.setSize(packet.length());
                     simPacket.setEthType(header.getType().valueAsString());
+                    simPacket.setIpProto("*");
                     if (header.getType() == EtherType.IPV4 || header.getType() == EtherType.IPV6) {
                         String protocol;
                         IpV6Packet ipV6Packet = null;
