@@ -1,5 +1,7 @@
 # MUDGEE
 Generate MUD Profiles using PCAP.
+# Prerequisite
+LibPcap (install tcpdump)
 
 # Installation
 
