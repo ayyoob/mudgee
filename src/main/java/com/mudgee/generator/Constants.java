@@ -53,5 +53,9 @@ public class Constants {
     public static final int ALL_DEVICE_COMMON_PRIORITY = 1400;
 
     public static final String BROADCAST_MAC = "ff:ff:ff:ff:ff:ff";
+    public static final String BROADCAST_IP = "255.255.255.255";
+    public static final String HOPOPT_PROTO = "0";
+    public static final String LINK_LOCAL_ALL_NODE = "ff02";
+    public static final String LINK_LOCAL_MULTICAST_IP_RANGE = "ff00::/8";
 
 }

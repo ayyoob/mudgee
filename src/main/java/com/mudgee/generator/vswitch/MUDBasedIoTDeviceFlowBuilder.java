@@ -68,10 +68,12 @@ public class MUDBasedIoTDeviceFlowBuilder implements ControllerApp {
             if (isIgnored(packet.getDstMac()) && devices.contains(packet.getSrcMac())) {
                 OFFlow ofFlow = new OFFlow();
                 ofFlow.setSrcMac(packet.getSrcMac());
-                if (packet.getDstMac().equals("ff:ff:ff:ff:ff:ff")) {
+                if (packet.getDstMac().equals(Constants.BROADCAST_MAC)) {
                     ofFlow.setDstMac(packet.getDstMac());
-                }
-                if (packet.getDstIp() != null) {
+                    if (packet.getDstIp() != null && packet.getDstIp().equals(Constants.BROADCAST_IP)) {
+                        ofFlow.setDstIp(packet.getDstIp());
+                    }
+                } else if (packet.getDstIp() != null) {
                     ofFlow.setDstIp(packet.getDstIp());
                 }
                 ofFlow.setEthType(packet.getEthType());

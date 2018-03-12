@@ -121,10 +121,14 @@ public class MUDGenerator {
 							String key = ofFlow.getEthType() + "|" + ofFlow.getIpProto() + "|" + ofFlow.getDstPort()
 									+ "|" + ofFlow.getIcmpCode() + "|" + ofFlow.getIcmpType();
 							if ((validIP(ofFlow.getDstIp()) || ofFlow.getDstMac().equals(Constants.BROADCAST_MAC)
-							||!ofFlow.getEthType().equals(Constants.ETH_TYPE_IPV4)
-									|| !ofFlow.getEthType().equals(Constants.ETH_TYPE_IPV6))
+							||!(ofFlow.getEthType().equals(Constants.ETH_TYPE_IPV4)
+									|| ofFlow.getEthType().equals(Constants.ETH_TYPE_IPV6)))
 									&& ofFlow.getPacketCount() <= MIN_PACKET_COUNT_THRESHOLD) {
 								continue;
+							}
+							if (ofFlow.getEthType().equals(Constants.ETH_TYPE_IPV6)
+									&& ofFlow.getDstIp().startsWith(LINK_LOCAL_ALL_NODE)) {
+								ofFlow.setDstIp(LINK_LOCAL_MULTICAST_IP_RANGE);
 							}
 							OFFlow flow = commonFlowMap.get(key);
 							if (flow == null) {
@@ -520,7 +524,7 @@ public class MUDGenerator {
 				if (validIP(ofFlow.getDstIp())) {
 					ipv4Match.setDestinationIp(ofFlow.getDstIp() + "/32");
 					if (ofFlow.getEthType().equals(Constants.ETH_TYPE_IPV6)) {
-						ipv6Match.setDestinationIp(ofFlow.getDstIp() + "/32");
+						ipv6Match.setDestinationIp(ofFlow.getDstIp());
 					}
 				} else if (!ofFlow.getDstIp().equals("*")) {
 					ipv4Match.setDstDnsName(ofFlow.getDstIp());
@@ -681,6 +685,9 @@ public class MUDGenerator {
 	}
 
 	private static boolean validIP(String ipAddress) {
+		if (ipAddress.equals(Constants.LINK_LOCAL_MULTICAST_IP_RANGE)) {
+			return true;
+		}
 		Matcher m1 = VALID_IPV4_PATTERN.matcher(ipAddress);
 		if (m1.matches()) {
 			return true;
