@@ -12,6 +12,4 @@ tcpdump
 
 ADD target ./mudgee
 
-CMD java -version
-
 CMD java -jar mudgee/mudgee-1.0.0-SNAPSHOT.jar mudgee/mud_config.json 
