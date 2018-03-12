@@ -57,6 +57,9 @@ public class MUDBasedIoTDeviceFlowBuilder implements ControllerApp {
             startTime = OFController.getInstance().getSwitch(dpId).getCurrentTime();
 
         }
+        if (!(devices.contains(packet.getSrcMac()) || devices.contains(packet.getDstMac()))) {
+            return;
+        }
         if (packet.getEthType().equals(Constants.ETH_TYPE_EAPOL)) {
             OFFlow ofFlow = new OFFlow();
             ofFlow.setEthType(Constants.ETH_TYPE_EAPOL);
