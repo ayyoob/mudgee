@@ -23,6 +23,7 @@ import java.util.List;
 public class OFSwitch {
     private String macAddress;
     private String ip;
+    private String ipv6;
     private String dpid;
     private long currentTime=0;
     private long lastPacketTime=0;
@@ -45,10 +46,11 @@ public class OFSwitch {
         lastPacketTime = packet.getTimestamp();
     }
 
-    public OFSwitch(String dpid, String macAddress, String ip) {
+    public OFSwitch(String dpid, String macAddress, String ip, String ipv6) {
         this.dpid = dpid;
         this.macAddress = macAddress.toLowerCase();
         this.ip = ip;
+        this.ipv6 = ipv6;
         ofFlows.add(getDefaultFlow());
     }
 
@@ -77,6 +79,10 @@ public class OFSwitch {
 
     public String getIp() {
         return ip;
+    }
+
+    public String getIpv6() {
+        return ipv6;
     }
 
     public void setIp(String ip) {

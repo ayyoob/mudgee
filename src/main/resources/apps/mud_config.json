@@ -1,13 +1,14 @@
 {
     "defaultGatewayConfig": {
         "macAddress" : "14:cc:20:51:33:ea",
-        "ipAddress": "192.168.1.1"
+        "ipAddress": "192.168.1.1",
+        "ipv6Address": "fe80:0:0:0:16cc:20ff:fe51:33ea"
     },
 
     "deviceConfig":{
-        "device":"44:65:0d:56:cc:d3",
-        "deviceName": "amazonEcho"
+        "device":"00:24:e4:20:28:c3",
+        "deviceName": "augustdoorbellcam"
     },
 
-    "pcapLocation": "/Users/ayyoobhamza/Desktop/unsw/mud/pcap/44650d56ccd3.pcap"
+    "pcapLocation": "/Users/ayyoobhamza/Desktop/unsw/mud/pcap/0024e42028c6.pcap"
 }

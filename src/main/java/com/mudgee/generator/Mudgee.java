@@ -63,12 +63,12 @@ public class Mudgee {
         String dpId = (String) switchConfig.get("macAddress");
         String macAddress = (String) switchConfig.get("macAddress");
         String ipAddress = (String) switchConfig.get("ipAddress");
-
+        String ipv6Address = (String) switchConfig.get("ipv6Address");
         JSONObject deviceConfig = (JSONObject) jsonObject.get("deviceConfig");
         OFController.getInstance().registerApps(new MUDBasedIoTDeviceFlowBuilder(), deviceConfig);
-        final OFSwitch ofSwitch = new OFSwitch(dpId, macAddress, ipAddress);
+        final OFSwitch ofSwitch = new OFSwitch(dpId, macAddress, ipAddress, ipv6Address);
         OFController.getInstance().addSwitch(ofSwitch);
-        processPcap(pcapLocation, ofSwitch);
+        //processPcap(pcapLocation, ofSwitch);
         OFController.getInstance().complete();
     }
 

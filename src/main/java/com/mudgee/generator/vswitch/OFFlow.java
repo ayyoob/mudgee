@@ -163,7 +163,8 @@ public class OFFlow implements Serializable{
     public int hashCode() {
         int result = this.srcMac.hashCode();
         result = 31 * result + ("@" + this.dstMac + "@" + this.ethType + "@" + this.vlanId
-                + "@" + this.srcIp + "@" + this.dstIp + "@" + this.ipProto + "@" + this.srcPort + "@" + this.dstPort).hashCode();
+                + "@" + this.srcIp + "@" + this.dstIp + "@" + this.ipProto + "@" + this.srcPort + "@" + this.dstPort
+                + "@" + this.icmpType+ "@" + this.icmpCode).hashCode();
 
         return result;
     }

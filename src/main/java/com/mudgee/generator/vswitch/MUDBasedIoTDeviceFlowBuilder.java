@@ -780,6 +780,24 @@ public class MUDBasedIoTDeviceFlowBuilder implements ControllerApp {
         ofFlow.setOfAction(OFFlow.OFAction.NORMAL);
         OFController.getInstance().addFlow(dpId, ofFlow);
 
+        ofFlow = new OFFlow();
+        ofFlow.setSrcMac(deviceMac);
+        ofFlow.setDstMac(gwMac);
+        ofFlow.setDstIp(OFController.getInstance().getSwitch(dpId).getIpv6());
+        ofFlow.setEthType(Constants.ETH_TYPE_IPV6);
+        ofFlow.setPriority(SKIP_FLOW_HIGHER_PRIORITY);
+        ofFlow.setOfAction(OFFlow.OFAction.NORMAL);
+        OFController.getInstance().addFlow(dpId, ofFlow);
+
+        ofFlow = new OFFlow();
+        ofFlow.setDstMac(deviceMac);
+        ofFlow.setSrcMac(gwMac);
+        ofFlow.setSrcIp(OFController.getInstance().getSwitch(dpId).getIpv6());
+        ofFlow.setEthType(Constants.ETH_TYPE_IPV6);
+        ofFlow.setPriority(SKIP_FLOW_HIGHER_PRIORITY);
+        ofFlow.setOfAction(OFFlow.OFAction.NORMAL);
+        OFController.getInstance().addFlow(dpId, ofFlow);
+
         //DNS
         ofFlow = new OFFlow();
         ofFlow.setSrcMac(deviceMac);
@@ -800,7 +818,7 @@ public class MUDBasedIoTDeviceFlowBuilder implements ControllerApp {
         ofFlow.setDstMac(gwMac);
         ofFlow.setIpProto(Constants.UDP_PROTO);
         ofFlow.setDstPort(Constants.DNS_PORT);
-        ofFlow.setEthType(Constants.ETH_TYPE_IPV4);
+        //ofFlow.setEthType(Constants.ETH_TYPE_IPV4);
         ofFlow.setPriority(COMMON_FLOW_PRIORITY);
         ofFlow.setOfAction(OFFlow.OFAction.MIRROR_TO_CONTROLLER);
         OFController.getInstance().addFlow(dpId, ofFlow);
@@ -810,7 +828,7 @@ public class MUDBasedIoTDeviceFlowBuilder implements ControllerApp {
         ofFlow.setDstMac(deviceMac);
         ofFlow.setIpProto(Constants.UDP_PROTO);
         ofFlow.setSrcPort(Constants.DNS_PORT);
-        ofFlow.setEthType(Constants.ETH_TYPE_IPV4);
+        //ofFlow.setEthType(Constants.ETH_TYPE_IPV4);
         ofFlow.setPriority(COMMON_FLOW_PRIORITY);
         ofFlow.setOfAction(OFFlow.OFAction.MIRROR_TO_CONTROLLER);
         OFController.getInstance().addFlow(dpId, ofFlow);
