@@ -148,10 +148,14 @@ public class MUDGenerator {
 								ofFlow.setDstPort("*");
 								ofFlow.setDstIp("*");
 								key = ofFlow.getIpProto() + "|" + ofFlow.getDstPort() + "|" + ofFlow.getSrcPort();
+								ArrayList<String> toBeRemoved = new ArrayList();
 								for (String keys : fromDeviceMap.keySet()) {
 									if (keys.contains("17|")) {
-										fromDeviceMap.remove(keys);
+										toBeRemoved.add(keys);
 									}
+								}
+								for (String keys: toBeRemoved) {
+									fromDeviceMap.remove(keys);
 								}
 								fromDeviceMap.put(key, ofFlow);
 								continue;
@@ -176,11 +180,14 @@ public class MUDGenerator {
 								ofFlow.setSrcPort("*");
 								ofFlow.setSrcIp("*");
 								key = ofFlow.getIpProto() + "|" + ofFlow.getDstPort() + "|" + ofFlow.getSrcPort();
-
+								ArrayList<String> toBeRemoved = new ArrayList();
 								for (String keys : toDeviceMap.keySet()) {
 									if (keys.contains("17|")) {
-										toDeviceMap.remove(keys);
+										toBeRemoved.add(keys);
 									}
+								}
+								for (String keys: toBeRemoved) {
+									toDeviceMap.remove(keys);
 								}
 
 								toDeviceMap.put(key, ofFlow);

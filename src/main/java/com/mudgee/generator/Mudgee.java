@@ -68,7 +68,7 @@ public class Mudgee {
         OFController.getInstance().registerApps(new MUDBasedIoTDeviceFlowBuilder(), deviceConfig);
         final OFSwitch ofSwitch = new OFSwitch(dpId, macAddress, ipAddress, ipv6Address);
         OFController.getInstance().addSwitch(ofSwitch);
-        //processPcap(pcapLocation, ofSwitch);
+        processPcap(pcapLocation, ofSwitch);
         OFController.getInstance().complete();
     }
 
