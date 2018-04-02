@@ -19,6 +19,7 @@ package com.mudgee.generator;
 
 public class Constants {
 
+    public static final String DHCP_PORT = "67";
     public static final String DNS_PORT = "53";
     public static final String NTP_PORT = "123";
     public static final String TCP_PROTO = "6";

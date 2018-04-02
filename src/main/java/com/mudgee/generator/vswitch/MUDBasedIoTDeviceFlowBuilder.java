@@ -60,13 +60,6 @@ public class MUDBasedIoTDeviceFlowBuilder implements ControllerApp {
         if (!(devices.contains(packet.getSrcMac()) || devices.contains(packet.getDstMac()))) {
             return;
         }
-        if (packet.getEthType().equals(Constants.ETH_TYPE_EAPOL)) {
-            OFFlow ofFlow = new OFFlow();
-            ofFlow.setEthType(Constants.ETH_TYPE_EAPOL);
-            ofFlow.setOfAction(OFFlow.OFAction.NORMAL);
-            ofFlow.setPriority(Constants.ALL_DEVICE_COMMON_PRIORITY);
-            OFController.getInstance().addFlow(dpId, ofFlow);
-        }
         if (isIgnored(packet.getSrcMac()) || isIgnored(packet.getDstMac())) {
             if (isIgnored(packet.getDstMac()) && devices.contains(packet.getSrcMac())) {
                 OFFlow ofFlow = new OFFlow();
@@ -831,6 +824,37 @@ public class MUDBasedIoTDeviceFlowBuilder implements ControllerApp {
         //ofFlow.setEthType(Constants.ETH_TYPE_IPV4);
         ofFlow.setPriority(COMMON_FLOW_PRIORITY);
         ofFlow.setOfAction(OFFlow.OFAction.MIRROR_TO_CONTROLLER);
+        OFController.getInstance().addFlow(dpId, ofFlow);
+
+        //dhcp
+        ofFlow = new OFFlow();
+        ofFlow.setSrcMac(deviceMac);
+        ofFlow.setDstMac(gwMac);
+        ofFlow.setDstIp(OFController.getInstance().getSwitch(dpId).getIp());
+        ofFlow.setIpProto(Constants.UDP_PROTO);
+        ofFlow.setDstPort(Constants.DHCP_PORT);
+        ofFlow.setEthType(Constants.ETH_TYPE_IPV4);
+        ofFlow.setPriority(ALL_DEVICE_COMMON_PRIORITY);
+        ofFlow.setOfAction(OFFlow.OFAction.NORMAL);
+        OFController.getInstance().addFlow(dpId, ofFlow);
+
+        ofFlow = new OFFlow();
+        ofFlow.setSrcMac(gwMac);
+        ofFlow.setSrcIp(OFController.getInstance().getSwitch(dpId).getIp());
+        ofFlow.setDstMac(deviceMac);
+        ofFlow.setIpProto(Constants.UDP_PROTO);
+        ofFlow.setSrcPort(Constants.DHCP_PORT);
+        ofFlow.setEthType(Constants.ETH_TYPE_IPV4);
+        ofFlow.setPriority(ALL_DEVICE_COMMON_PRIORITY);
+        ofFlow.setOfAction(OFFlow.OFAction.NORMAL);
+        OFController.getInstance().addFlow(dpId, ofFlow);
+
+        //eapol
+        ofFlow = new OFFlow();
+        ofFlow.setSrcMac(deviceMac);
+        ofFlow.setEthType(Constants.ETH_TYPE_EAPOL);
+        ofFlow.setPriority(L2D_FIXED_FLOW_PRIORITY);
+        ofFlow.setOfAction(OFFlow.OFAction.NORMAL);
         OFController.getInstance().addFlow(dpId, ofFlow);
 
         //NTP

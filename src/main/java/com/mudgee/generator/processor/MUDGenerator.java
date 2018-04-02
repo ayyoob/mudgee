@@ -63,13 +63,13 @@ public class MUDGenerator {
 			throws JsonProcessingException, FileNotFoundException, UnsupportedEncodingException {
 		List<OFFlow> fromDevice = new ArrayList<>();
 		List<OFFlow> toDevice = new ArrayList<>();
-		generateDeviceFlows(deviceName, deviceMac, fromDevice, toDevice);
+		generateDeviceFlows(deviceName, deviceMac, fromDevice, toDevice, defaultGatewayIp);
 		generateMud(deviceName, defaultGatewayIp, fromDevice, toDevice);
 
 	}
 
 	private static void generateDeviceFlows(String deviceName, String deviceMac,
-											List<OFFlow> fromDevice, List<OFFlow> toDevice)
+											List<OFFlow> fromDevice, List<OFFlow> toDevice, String defaultGatewayIp)
 			throws JsonProcessingException, FileNotFoundException, UnsupportedEncodingException {
 		String currentPath = Paths.get(".").toAbsolutePath().normalize().toString();
 		String workingDirectory = currentPath + File.separator + "result"
@@ -231,11 +231,24 @@ public class MUDGenerator {
 						}
 						fromDevice.add(deviceFlow);
 						continue;
+					} else if (deviceFlow.getDstPort().equals(DHCP_PORT) && deviceFlow.getDstIp().equals(defaultGatewayIp)) {
+						deviceFlow.setSrcMac(DEVICETAG);
+						deviceFlow.setDstMac(GATEWAYTAG);
+						deviceFlow.setDstIp(deviceFlow.getDstIp());
+						fromDevice.add(deviceFlow);
+						continue;
+					} else if (deviceFlow.getSrcPort().equals(DHCP_PORT) && deviceFlow.getSrcIp().equals(defaultGatewayIp)) {
+						deviceFlow.setSrcMac(GATEWAYTAG);
+						deviceFlow.setDstMac(DEVICETAG);
+						deviceFlow.setSrcIp(deviceFlow.getSrcIp());
+						toDevice.add(deviceFlow);
+						continue;
 					}
 					deviceFlow.setSrcMac(DEVICETAG);
 					deviceFlow.setDstMac(GATEWAYTAG);
 					deviceFlow.setDstIp(dstLocation);
 					fromDevice.add(deviceFlow);
+
 
 					OFFlow reverseFlow = deviceFlow.copy();
 					reverseFlow.setSrcMac(deviceFlow.getDstMac());
@@ -337,7 +350,7 @@ public class MUDGenerator {
 		String fromIpv4Id = "from-ipv4-" + deviceName.toLowerCase().replace(" ", "");
 		fromIPv4DevicessAccesssListHolder.setName(fromIpv4Id);
 		Aces ipv4FromAces = new Aces();
-		List<Ace> fromIpv4aceList = getFromAces(fromDevice, fromIpv4Id, defaultGatewayIp, false);
+		List<Ace> fromIpv4aceList = getFromAces(fromDevice, fromIpv4Id, defaultGatewayIp, false, true);
 		ipv4FromAces.setAceList(fromIpv4aceList);
 		fromIPv4DevicessAccesssListHolder.setAces(ipv4FromAces);
 
@@ -358,7 +371,7 @@ public class MUDGenerator {
 		String fromIpv6Id = "from-ipv6-" + deviceName.toLowerCase().replace(" ", "");
 		fromIPv6DevicessAccesssListHolder.setName(fromIpv6Id);
 		Aces ipv6FromAces = new Aces();
-		List<Ace> fromIpv6aceList = getFromAces(fromDevice, fromIpv6Id, defaultGatewayIp, true);
+		List<Ace> fromIpv6aceList = getFromAces(fromDevice, fromIpv6Id, defaultGatewayIp, true, true);
 		ipv6FromAces.setAceList(fromIpv6aceList);
 		fromIPv6DevicessAccesssListHolder.setAces(ipv6FromAces);
 
@@ -373,6 +386,16 @@ public class MUDGenerator {
 		ipv6ToAces.setAceList(toIpv6AceList);
 		toIPv6DevicessAccesssListHolder.setAces(ipv6ToAces);
 
+		//ethernet from Device
+		AccessControlListHolder fromEthernetDevicessAccesssListHolder = new AccessControlListHolder();
+		fromEthernetDevicessAccesssListHolder.setType("ethernet-acl-type");
+		String fromethernetId = "from-ethernet-" + deviceName.toLowerCase().replace(" ", "");
+		fromEthernetDevicessAccesssListHolder.setName(fromethernetId);
+		Aces ethernetFromAces = new Aces();
+		List<Ace> fromEthernetaceList = getFromAces(fromDevice, fromethernetId, defaultGatewayIp, false, false);
+		ethernetFromAces.setAceList(fromEthernetaceList);
+		fromEthernetDevicessAccesssListHolder.setAces(ethernetFromAces);
+
 
 		AccessDTO fromIpv4AccessDTO = new AccessDTO();
 		fromIpv4AccessDTO.setName("from-ipv4-" + deviceName.toLowerCase().replace(" ", ""));
@@ -385,6 +408,9 @@ public class MUDGenerator {
 
 		AccessDTO toIpv6accessDTO = new AccessDTO();
 		toIpv6accessDTO.setName("to-ipv6-" + deviceName.toLowerCase().replace(" ", ""));
+
+		AccessDTO fromEthernetAccessDTO = new AccessDTO();
+		fromEthernetAccessDTO.setName("from-ethernet-" + deviceName.toLowerCase().replace(" ", ""));
 
 		IetfMud ietfMud = new IetfMud();
 		ietfMud.setMudVersion(1);
@@ -415,6 +441,11 @@ public class MUDGenerator {
 			listHolders.add(toIPv6DevicessAccesssListHolder);
 		}
 
+		if (fromEthernetDevicessAccesssListHolder.getAces().getAceList() != null
+				&& fromEthernetDevicessAccesssListHolder.getAces().getAceList().size() > 0) {
+			listHolders.add(fromEthernetDevicessAccesssListHolder);
+		}
+
 		ietfAccessControlListHolder.setAccessControlListHolder(listHolders);
 
 		//from DeviceMud
@@ -429,6 +460,12 @@ public class MUDGenerator {
 				&& fromIPv6DevicessAccesssListHolder.getAces().getAceList().size() > 0) {
 			fromAccessDTOS.add(fromIpv6AccessDTO);
 		}
+
+		if (fromEthernetDevicessAccesssListHolder.getAces().getAceList() != null
+				&& fromEthernetDevicessAccesssListHolder.getAces().getAceList().size() > 0) {
+			fromAccessDTOS.add(fromEthernetAccessDTO);
+		}
+
 		fromAccess.setAccessDTOList(fromAccessDTOS);
 		fromAccessLists.setAccessList(fromAccess);
 		ietfMud.setFromDevicePolicy(fromAccessLists);
@@ -476,116 +513,143 @@ public class MUDGenerator {
 		out.flush();
 	}
 
-	private static List<Ace> getFromAces(List<OFFlow> fromDevice, String fromId, String defaultGatewayIp, boolean ipv6) {
+	private static List<Ace> getFromAces(List<OFFlow> fromDevice, String fromId, String defaultGatewayIp, boolean ipv6
+			, boolean isIp) {
 		List<Ace> aceList = new ArrayList<>();
 		int id = 0;
 		for (OFFlow ofFlow : fromDevice) {
-			if (ipv6 && !ofFlow.getEthType().equals(Constants.ETH_TYPE_IPV6)) {
-				continue;
-			} else if (!ipv6 && ofFlow.getEthType().equals(Constants.ETH_TYPE_IPV6)) {
-				continue;
-			}
+			if (isIp) {
+				if (!(ofFlow.getEthType().equals(Constants.ETH_TYPE_IPV6)
+						|| ofFlow.getEthType().equals(Constants.ETH_TYPE_IPV4))) {
+					continue;
+				} else if (ipv6 && !ofFlow.getEthType().equals(Constants.ETH_TYPE_IPV6)) {
+					continue;
+				} else if (!ipv6 && ofFlow.getEthType().equals(Constants.ETH_TYPE_IPV6)) {
+					continue;
+				}
 
-			Ace ace = new Ace();
-			ace.setName(fromId + "-" + id);
+				Ace ace = new Ace();
+				ace.setName(fromId + "-" + id);
 
-			Actions actions = new Actions();
-			actions.setForwarding("accept");
-			ace.setActions(actions);
-			Match match = new Match();
+				Actions actions = new Actions();
+				actions.setForwarding("accept");
+				ace.setActions(actions);
+				Match match = new Match();
 
-			//L3Match l3Match = new L3Match();
-			IPV4Match ipv4Match = null;
-			IPV6Match ipv6Match = null;
-			if (ofFlow.getIpProto() != null && !ofFlow.getIpProto().equals("*")) {
-				ipv4Match = new IPV4Match();
-				ipv6Match = new IPV6Match();
-				ipv4Match.setProtocol(Integer.parseInt(ofFlow.getIpProto()));
-				ipv6Match.setProtocol(Integer.parseInt(ofFlow.getIpProto()));
-			}
+				//L3Match l3Match = new L3Match();
+				IPV4Match ipv4Match = null;
+				IPV6Match ipv6Match = null;
+				if (ofFlow.getIpProto() != null && !ofFlow.getIpProto().equals("*")) {
+					ipv4Match = new IPV4Match();
+					ipv6Match = new IPV6Match();
+					ipv4Match.setProtocol(Integer.parseInt(ofFlow.getIpProto()));
+					ipv6Match.setProtocol(Integer.parseInt(ofFlow.getIpProto()));
+				}
 
-			if (!ofFlow.getDstMac().equals(GATEWAYTAG)) {
-				IetfMudMatch ietfMudMatch = new IetfMudMatch();
-				List<String> localString = new ArrayList<>();
-				;
-				localString.add(LOCAL_TAG);
-				ietfMudMatch.setLocalNetworks(localString);
-				match.setIetfMudMatch(ietfMudMatch);
-				if (validIP(ofFlow.getDstIp())) {
-					ipv4Match.setDestinationIp(ofFlow.getDstIp() + "/32");
-					if (ofFlow.getEthType().equals(Constants.ETH_TYPE_IPV6)) {
-						ipv6Match.setDestinationIp(ofFlow.getDstIp());
+				if (!ofFlow.getDstMac().equals(GATEWAYTAG)) {
+					IetfMudMatch ietfMudMatch = new IetfMudMatch();
+					List<String> localString = new ArrayList<>();
+					;
+					localString.add(LOCAL_TAG);
+					ietfMudMatch.setLocalNetworks(localString);
+					match.setIetfMudMatch(ietfMudMatch);
+					if (validIP(ofFlow.getDstIp())) {
+						ipv4Match.setDestinationIp(ofFlow.getDstIp() + "/32");
+						if (ofFlow.getEthType().equals(Constants.ETH_TYPE_IPV6)) {
+							ipv6Match.setDestinationIp(ofFlow.getDstIp());
+						}
+					}
+					if (ofFlow.getDstMac().equals(Constants.BROADCAST_MAC)) {
+						EthMatch ethMatch = new EthMatch();
+						ethMatch.setEtherType(ofFlow.getEthType());
+						ethMatch.setDstMacAddress(ofFlow.getDstMac());
+						match.setEthMatch(ethMatch);
+					}
+				} else if (ofFlow.getDstIp().equals(defaultGatewayIp)) {
+					IetfMudMatch ietfMudMatch = new IetfMudMatch();
+					ietfMudMatch.setController(DEFAULTGATEWAYCONTROLLER);
+					match.setIetfMudMatch(ietfMudMatch);
+				} else {
+					if (validIP(ofFlow.getDstIp())) {
+						ipv4Match.setDestinationIp(ofFlow.getDstIp() + "/32");
+						if (ofFlow.getEthType().equals(Constants.ETH_TYPE_IPV6)) {
+							ipv6Match.setDestinationIp(ofFlow.getDstIp());
+						}
+					} else if (!ofFlow.getDstIp().equals("*")) {
+						ipv4Match.setDstDnsName(ofFlow.getDstIp());
+						if (ofFlow.getEthType().equals(Constants.ETH_TYPE_IPV6)) {
+							ipv6Match.setDstDnsName(ofFlow.getDstIp());
+						}
 					}
 				}
-				if (ofFlow.getDstMac().equals(Constants.BROADCAST_MAC)) {
-					EthMatch ethMatch = new EthMatch();
-					ethMatch.setEtherType(ofFlow.getEthType());
-					ethMatch.setDstMacAddress(ofFlow.getDstMac());
-					match.setEthMatch(ethMatch);
+				//l3Match.setIpv4Match(ipv4Match);
+				if (ofFlow.getEthType().equals(Constants.ETH_TYPE_IPV6)) {
+					match.setIpv6Match(ipv6Match);
+				} else {
+					match.setIpv4Match(ipv4Match);
 				}
-			} else if (ofFlow.getDstIp().equals(defaultGatewayIp)) {
-				IetfMudMatch ietfMudMatch = new IetfMudMatch();
-				ietfMudMatch.setController(DEFAULTGATEWAYCONTROLLER);
-				match.setIetfMudMatch(ietfMudMatch);
+
+				if (ofFlow.getIpProto().equals(Constants.TCP_PROTO)) {
+					//L4Match l4Match = new L4Match();
+					TcpMatch tcpMatch = new TcpMatch();
+					if (ofFlow.getPriority() == Constants.D2G_FIXED_FLOW_INITIALIZED_PRIORITY) {
+						tcpMatch.setDirectionInitialized("from-device");
+					} else if (ofFlow.getPriority() == Constants.G2D_FIXED_FLOW_INITIALIZED_PRIORITY ||
+							ofFlow.getPriority() == Constants.L2D_FIXED_FLOW_INIALIZED_PRIORITY) {
+						tcpMatch.setDirectionInitialized("to-device");
+					}
+					if (!"*".equals(ofFlow.getDstPort())) {
+						tcpMatch.setDestinationPortMatch(getPortMatch(ofFlow.getDstPort()));
+					} else if (!"*".equals(ofFlow.getSrcPort())) {
+						tcpMatch.setSourcePortMatch(getPortMatch(ofFlow.getSrcPort()));
+					}
+					//l4Match.setTcpMatch(tcpMatch);
+					match.setTcpMatch(tcpMatch);
+
+				} else if (ofFlow.getIpProto().equals(Constants.UDP_PROTO)) {
+					//L4Match l4Match = new L4Match();
+					UdpMatch udpMatch = new UdpMatch();
+					if (!"*".equals(ofFlow.getDstPort())) {
+						udpMatch.setDestinationPortMatch(getPortMatch(ofFlow.getDstPort()));
+					} else if (!"*".equals(ofFlow.getSrcPort())) {
+						udpMatch.setSourcePortMatch(getPortMatch(ofFlow.getSrcPort()));
+					}
+					//l4Match.setUdpMatch(udpMatch);
+					match.setUdpMatch(udpMatch);
+				} else if (ofFlow.getIpProto().equals(Constants.ICMP_PROTO)) {
+					IcmpMatch icmpMatch = new IcmpMatch();
+					if (!"*".equals(ofFlow.getIcmpCode())) {
+						icmpMatch.setCode(Integer.parseInt(ofFlow.getIcmpCode()));
+						icmpMatch.setType(Integer.parseInt(ofFlow.getIcmpType()));
+						match.setIcmpMatch(icmpMatch);
+					}
+
+				}
+				ace.setMatches(match);
+				aceList.add(ace);
+				id++;
 			} else {
-				if (validIP(ofFlow.getDstIp())) {
-					ipv4Match.setDestinationIp(ofFlow.getDstIp() + "/32");
-					if (ofFlow.getEthType().equals(Constants.ETH_TYPE_IPV6)) {
-						ipv6Match.setDestinationIp(ofFlow.getDstIp());
-					}
-				} else if (!ofFlow.getDstIp().equals("*")) {
-					ipv4Match.setDstDnsName(ofFlow.getDstIp());
-					if (ofFlow.getEthType().equals(Constants.ETH_TYPE_IPV6)) {
-						ipv6Match.setDstDnsName(ofFlow.getDstIp());
-					}
-				}
-			}
-			//l3Match.setIpv4Match(ipv4Match);
-			if (ofFlow.getEthType().equals(Constants.ETH_TYPE_IPV6)) {
-				match.setIpv6Match(ipv6Match);
-			} else {
-				match.setIpv4Match(ipv4Match);
-			}
 
-			if (ofFlow.getIpProto().equals(Constants.TCP_PROTO)) {
-				//L4Match l4Match = new L4Match();
-				TcpMatch tcpMatch = new TcpMatch();
-				if (ofFlow.getPriority() == Constants.D2G_FIXED_FLOW_INITIALIZED_PRIORITY) {
-					tcpMatch.setDirectionInitialized("from-device");
-				} else if (ofFlow.getPriority() == Constants.G2D_FIXED_FLOW_INITIALIZED_PRIORITY ||
-						ofFlow.getPriority() == Constants.L2D_FIXED_FLOW_INIALIZED_PRIORITY) {
-					tcpMatch.setDirectionInitialized("to-device");
-				}
-				if (!"*".equals(ofFlow.getDstPort())) {
-					tcpMatch.setDestinationPortMatch(getPortMatch(ofFlow.getDstPort()));
-				} else if (!"*".equals(ofFlow.getSrcPort())) {
-					tcpMatch.setSourcePortMatch(getPortMatch(ofFlow.getSrcPort()));
-				}
-				//l4Match.setTcpMatch(tcpMatch);
-				match.setTcpMatch(tcpMatch);
-
-			} else if (ofFlow.getIpProto().equals(Constants.UDP_PROTO)) {
-				//L4Match l4Match = new L4Match();
-				UdpMatch udpMatch = new UdpMatch();
-				if (!"*".equals(ofFlow.getDstPort())) {
-					udpMatch.setDestinationPortMatch(getPortMatch(ofFlow.getDstPort()));
-				} else if (!"*".equals(ofFlow.getSrcPort())) {
-					udpMatch.setSourcePortMatch(getPortMatch(ofFlow.getSrcPort()));
-				}
-				//l4Match.setUdpMatch(udpMatch);
-				match.setUdpMatch(udpMatch);
-			} else if (ofFlow.getIpProto().equals(Constants.ICMP_PROTO)) {
-				IcmpMatch icmpMatch = new IcmpMatch();
-				if (!"*".equals(ofFlow.getIcmpCode())) {
-					icmpMatch.setCode(Integer.parseInt(ofFlow.getIcmpCode()));
-					icmpMatch.setType(Integer.parseInt(ofFlow.getIcmpType()));
-					match.setIcmpMatch(icmpMatch);
+				if ((ofFlow.getEthType().equals(Constants.ETH_TYPE_IPV6)
+						|| ofFlow.getEthType().equals(Constants.ETH_TYPE_IPV4))) {
+					continue;
 				}
 
+				Ace ace = new Ace();
+				ace.setName(fromId + "-" + id);
+
+				Actions actions = new Actions();
+				actions.setForwarding("accept");
+				ace.setActions(actions);
+				Match match = new Match();
+				EthMatch ethMatch = new EthMatch();
+				ethMatch.setEtherType(ofFlow.getEthType());
+				match.setEthMatch(ethMatch);
+				ace.setMatches(match);
+				aceList.add(ace);
+				id++;
 			}
-			ace.setMatches(match);
-			aceList.add(ace);
-			id++;
+
 		}
 		return aceList;
 	}
