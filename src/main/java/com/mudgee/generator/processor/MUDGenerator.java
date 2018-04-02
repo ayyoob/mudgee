@@ -638,6 +638,7 @@ public class MUDGenerator {
 				Ace ace = new Ace();
 				ace.setName(fromId + "-" + id);
 
+
 				Actions actions = new Actions();
 				actions.setForwarding("accept");
 				ace.setActions(actions);
@@ -645,6 +646,13 @@ public class MUDGenerator {
 				EthMatch ethMatch = new EthMatch();
 				ethMatch.setEtherType(ofFlow.getEthType());
 				match.setEthMatch(ethMatch);
+
+				IetfMudMatch ietfMudMatch = new IetfMudMatch();
+				List<String> localString = new ArrayList<>();
+				localString.add(LOCAL_TAG);
+				ietfMudMatch.setLocalNetworks(localString);
+				match.setIetfMudMatch(ietfMudMatch);
+
 				ace.setMatches(match);
 				aceList.add(ace);
 				id++;
