@@ -61,15 +61,15 @@ public class MUDGenerator {
 
 	public static void generate(String deviceName, String deviceMac, String defaultGatewayIp)
 			throws JsonProcessingException, FileNotFoundException, UnsupportedEncodingException {
-		List<OFFlow> fromDevice = new ArrayList<>();
-		List<OFFlow> toDevice = new ArrayList<>();
+		Set<OFFlow> fromDevice = new HashSet<>();
+		Set<OFFlow> toDevice = new HashSet<>();
 		generateDeviceFlows(deviceName, deviceMac, fromDevice, toDevice, defaultGatewayIp);
 		generateMud(deviceName, defaultGatewayIp, fromDevice, toDevice);
 
 	}
 
 	private static void generateDeviceFlows(String deviceName, String deviceMac,
-											List<OFFlow> fromDevice, List<OFFlow> toDevice, String defaultGatewayIp)
+											Set<OFFlow> fromDevice, Set<OFFlow> toDevice, String defaultGatewayIp)
 			throws JsonProcessingException, FileNotFoundException, UnsupportedEncodingException {
 		String currentPath = Paths.get(".").toAbsolutePath().normalize().toString();
 		String workingDirectory = currentPath + File.separator + "result"
@@ -79,7 +79,7 @@ public class MUDGenerator {
 		Map<String, OFFlow> commonFlowMap = new HashMap<>();
 		Map<String, OFFlow> fromDeviceMap = new HashMap<>();
 		Map<String, OFFlow> toDeviceMap = new HashMap<>();
-		List<OFFlow> localDevice = new ArrayList<>();
+		Set<OFFlow> localDevice = new HashSet<>();
 
 		boolean stunEnabled = false;
 
@@ -119,7 +119,8 @@ public class MUDGenerator {
 								continue;
 							}
 							String key = ofFlow.getEthType() + "|" + ofFlow.getIpProto() + "|" + ofFlow.getDstPort()
-									+ "|" + ofFlow.getIcmpCode() + "|" + ofFlow.getIcmpType();
+									+ "|" + ofFlow.getIcmpCode() + "|" + ofFlow.getIcmpType() + "|" + ofFlow.getDstIp()
+									+ "|" + ofFlow.getSrcIp();
 							if ((validIP(ofFlow.getDstIp()) || ofFlow.getDstMac().equals(Constants.BROADCAST_MAC)
 							||!(ofFlow.getEthType().equals(Constants.ETH_TYPE_IPV4)
 									|| ofFlow.getEthType().equals(Constants.ETH_TYPE_IPV6)))
@@ -341,8 +342,8 @@ public class MUDGenerator {
 		}
 	}
 
-	private static void generateMud(String deviceName, String defaultGatewayIp, List<OFFlow> fromDevice,
-									List<OFFlow> toDevice) throws FileNotFoundException, UnsupportedEncodingException, JsonProcessingException {
+	private static void generateMud(String deviceName, String defaultGatewayIp, Set<OFFlow> fromDevice,
+									Set<OFFlow> toDevice) throws FileNotFoundException, UnsupportedEncodingException, JsonProcessingException {
 		String currentPath = Paths.get(".").toAbsolutePath().normalize().toString();
 		//ipv4 from Device
 		AccessControlListHolder fromIPv4DevicessAccesssListHolder = new AccessControlListHolder();
@@ -503,7 +504,7 @@ public class MUDGenerator {
 		out.close();
 	}
 
-	private static void printList(List<OFFlow> toPrint, PrintWriter out) {
+	private static void printList(Set<OFFlow> toPrint, PrintWriter out) {
 		for (OFFlow ofFlow : toPrint) {
 			ofFlow.setVlanId("NIL");
 			String flowString = ofFlow.getFlowStringWithoutFlowStat();
@@ -513,7 +514,7 @@ public class MUDGenerator {
 		out.flush();
 	}
 
-	private static List<Ace> getFromAces(List<OFFlow> fromDevice, String fromId, String defaultGatewayIp, boolean ipv6
+	private static List<Ace> getFromAces(Set<OFFlow> fromDevice, String fromId, String defaultGatewayIp, boolean ipv6
 			, boolean isIp) {
 		List<Ace> aceList = new ArrayList<>();
 		int id = 0;
@@ -662,7 +663,7 @@ public class MUDGenerator {
 		return aceList;
 	}
 
-	private static List<Ace> getToAces(List<OFFlow> toDevice, String toId, String defaultGatewayIp, boolean ipv6) {
+	private static List<Ace> getToAces(Set<OFFlow> toDevice, String toId, String defaultGatewayIp, boolean ipv6) {
 		List<Ace> aceList = new ArrayList<>();
 		int id = 0;
 		for (OFFlow ofFlow : toDevice) {
