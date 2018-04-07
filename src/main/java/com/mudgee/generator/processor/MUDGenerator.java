@@ -38,6 +38,8 @@ public class MUDGenerator {
 	private static final String DEVICETAG = "<deviceMac>";
 	private static final String GATEWAYTAG = "<gatewayMac>";
 	private static final String DEFAULTGATEWAYCONTROLLER = "urn:ietf:params:mud:gateway";
+	private static final String NTP_CONTROLLER = "urn:ietf:params:mud:ntp";
+	private static final String DNS_CONTROLLER = "urn:ietf:params:mud:dns";
 	private static final String LOCAL_TAG = "localTAG";
 	private static final String STUN_PROTO_PORT = "3478";
 	private static final int MAX_IP_PER_PROTO = 3;
@@ -568,7 +570,12 @@ public class MUDGenerator {
 					}
 				} else if (ofFlow.getDstIp().equals(defaultGatewayIp)) {
 					IetfMudMatch ietfMudMatch = new IetfMudMatch();
-					ietfMudMatch.setController(DEFAULTGATEWAYCONTROLLER);
+					if (ofFlow.getDstPort().equals(Constants.DNS_PORT) || ofFlow.getDstPort().equals(Constants.NTP_PORT)) {
+						String controller = ofFlow.getDstPort().equals(Constants.DNS_PORT)? DNS_CONTROLLER : NTP_CONTROLLER;
+						ietfMudMatch.setController(controller);
+					} else {
+						ietfMudMatch.setController(DEFAULTGATEWAYCONTROLLER);
+					}
 					match.setIetfMudMatch(ietfMudMatch);
 				} else {
 					if (validIP(ofFlow.getDstIp())) {
@@ -697,7 +704,12 @@ public class MUDGenerator {
 				match.setIetfMudMatch(ietfMudMatch);
 			} else if (ofFlow.getSrcIp().equals(defaultGatewayIp)) {
 				IetfMudMatch ietfMudMatch = new IetfMudMatch();
-				ietfMudMatch.setController(DEFAULTGATEWAYCONTROLLER);
+				if (ofFlow.getSrcPort().equals(Constants.DNS_PORT) || ofFlow.getSrcPort().equals(Constants.NTP_PORT)) {
+					String controller = ofFlow.getSrcPort().equals(Constants.DNS_PORT)? DNS_CONTROLLER : NTP_CONTROLLER;
+					ietfMudMatch.setController(controller);
+				} else {
+					ietfMudMatch.setController(DEFAULTGATEWAYCONTROLLER);
+				}
 				match.setIetfMudMatch(ietfMudMatch);
 			} else {
 				if (validIP(ofFlow.getSrcIp())) {
