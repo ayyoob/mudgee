@@ -1192,7 +1192,8 @@ public class MUDBasedIoTDeviceFlowBuilder implements ControllerApp {
                 PrintWriter writer = null;
                 if (!skipIpFlows) {
                     try {
-                        writer = new PrintWriter(currentPath + File.separator + deviceMac + "_ipflows.csv", "UTF-8");
+                        writer = new PrintWriter(currentPath + File.separator
+                                + deviceMac.replace(":","") + "_ipflows.csv", "UTF-8");
                         Set<OFFlow> exist = new HashSet<OFFlow>();
 
                         if (ofFlows.size() > 0) {

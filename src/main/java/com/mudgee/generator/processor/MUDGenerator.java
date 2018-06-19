@@ -76,7 +76,7 @@ public class MUDGenerator {
 		String currentPath = Paths.get(".").toAbsolutePath().normalize().toString();
 		String workingDirectory = currentPath + File.separator + "result"
 				+ File.separator + deviceName + File.separator;
-		File ipflowFile = new File(workingDirectory + deviceMac + "_ipflows.csv");
+		File ipflowFile = new File(workingDirectory + deviceMac.replace(":", "") + "_ipflows.csv");
 
 		Map<String, OFFlow> commonFlowMap = new HashMap<>();
 		Map<String, OFFlow> fromDeviceMap = new HashMap<>();
