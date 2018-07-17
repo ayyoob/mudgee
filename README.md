@@ -30,8 +30,9 @@ We generate MUD profile for a device by monitoring its traffic trace.
 Location of the traffic trace.
 
     "deviceConfig":{ "device":"00:24:e4:20:28:c3", "deviceName": "augustdoorbellcam" }
-    "device" : Mac address of the device that we monitor to generate the MUD for.
-    "deviceName": name that appears on the MUD profile.
+ device" : Mac address of the device that we monitor to generate the MUD for.
+ 
+ deviceName": name that appears on the MUD profile.
 
     "defaultGatewayConfig": { "macAddress" : "14:cc:20:51:33:ea", "ipAddress": "192.168.1.1", "ipv6Address": "fe80:0:0:0:16cc:20ff:fe51:33ea" }
 
