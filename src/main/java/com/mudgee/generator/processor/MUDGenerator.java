@@ -61,17 +61,17 @@ public class MUDGenerator {
 	}
 
 
-	public static void generate(String deviceName, String deviceMac, String defaultGatewayIp)
+	public static void generate(String deviceName, String deviceMac, String defaultGatewayIp, String defaultGatewayIpv6)
 			throws JsonProcessingException, FileNotFoundException, UnsupportedEncodingException {
 		Set<OFFlow> fromDevice = new HashSet<>();
 		Set<OFFlow> toDevice = new HashSet<>();
-		generateDeviceFlows(deviceName, deviceMac, fromDevice, toDevice, defaultGatewayIp);
-		generateMud(deviceName, defaultGatewayIp, fromDevice, toDevice);
+		generateDeviceFlows(deviceName, deviceMac, fromDevice, toDevice, defaultGatewayIp, defaultGatewayIpv6);
+		generateMud(deviceName, defaultGatewayIp, defaultGatewayIpv6, fromDevice, toDevice);
 
 	}
 
 	private static void generateDeviceFlows(String deviceName, String deviceMac,
-											Set<OFFlow> fromDevice, Set<OFFlow> toDevice, String defaultGatewayIp)
+											Set<OFFlow> fromDevice, Set<OFFlow> toDevice, String defaultGatewayIp,  String defaultGatewayIpv6)
 			throws JsonProcessingException, FileNotFoundException, UnsupportedEncodingException {
 		String currentPath = Paths.get(".").toAbsolutePath().normalize().toString();
 		String workingDirectory = currentPath + File.separator + "result"
@@ -246,6 +246,18 @@ public class MUDGenerator {
 						deviceFlow.setSrcIp(deviceFlow.getSrcIp());
 						toDevice.add(deviceFlow);
 						continue;
+					} else if (deviceFlow.getDstPort().equals(DHCPV6_PORT) && deviceFlow.getDstIp().equals(defaultGatewayIpv6)) {
+						deviceFlow.setSrcMac(DEVICETAG);
+						deviceFlow.setDstMac(GATEWAYTAG);
+						deviceFlow.setDstIp(deviceFlow.getDstIp());
+						fromDevice.add(deviceFlow);
+						continue;
+					} else if (deviceFlow.getSrcPort().equals(DHCPV6_PORT) && deviceFlow.getSrcIp().equals(defaultGatewayIpv6)) {
+						deviceFlow.setSrcMac(GATEWAYTAG);
+						deviceFlow.setDstMac(DEVICETAG);
+						deviceFlow.setSrcIp(deviceFlow.getSrcIp());
+						toDevice.add(deviceFlow);
+						continue;
 					}
 					deviceFlow.setSrcMac(DEVICETAG);
 					deviceFlow.setDstMac(GATEWAYTAG);
@@ -344,7 +356,7 @@ public class MUDGenerator {
 		}
 	}
 
-	private static void generateMud(String deviceName, String defaultGatewayIp, Set<OFFlow> fromDevice,
+	private static void generateMud(String deviceName, String defaultGatewayIp, String defaultGatewayIpv6, Set<OFFlow> fromDevice,
 									Set<OFFlow> toDevice) throws FileNotFoundException, UnsupportedEncodingException, JsonProcessingException {
 		String currentPath = Paths.get(".").toAbsolutePath().normalize().toString();
 		//ipv4 from Device
@@ -374,7 +386,7 @@ public class MUDGenerator {
 		String fromIpv6Id = "from-ipv6-" + deviceName.toLowerCase().replace(" ", "");
 		fromIPv6DevicessAccesssListHolder.setName(fromIpv6Id);
 		Aces ipv6FromAces = new Aces();
-		List<Ace> fromIpv6aceList = getFromAces(fromDevice, fromIpv6Id, defaultGatewayIp, true, true);
+		List<Ace> fromIpv6aceList = getFromAces(fromDevice, fromIpv6Id, defaultGatewayIpv6, true, true);
 		ipv6FromAces.setAceList(fromIpv6aceList);
 		fromIPv6DevicessAccesssListHolder.setAces(ipv6FromAces);
 
@@ -385,7 +397,7 @@ public class MUDGenerator {
 		String toIp6Id = "to-ipv6-" + deviceName.toLowerCase().replace(" ", "");
 		toIPv6DevicessAccesssListHolder.setName(toIp6Id);
 		Aces ipv6ToAces = new Aces();
-		List<Ace> toIpv6AceList = getToAces(toDevice, toIp6Id, defaultGatewayIp, true);
+		List<Ace> toIpv6AceList = getToAces(toDevice, toIp6Id, defaultGatewayIpv6, true);
 		ipv6ToAces.setAceList(toIpv6AceList);
 		toIPv6DevicessAccesssListHolder.setAces(ipv6ToAces);
 

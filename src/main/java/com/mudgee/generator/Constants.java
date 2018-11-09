@@ -20,6 +20,7 @@ package com.mudgee.generator;
 public class Constants {
 
     public static final String DHCP_PORT = "67";
+    public static final String DHCPV6_PORT = "547";
     public static final String DNS_PORT = "53";
     public static final String NTP_PORT = "123";
     public static final String TCP_PROTO = "6";
@@ -34,6 +35,7 @@ public class Constants {
 
     public static final String ICMP_ECHO_TYPE = "8";
     public static final String ICMP_ECHO_REPLY_TYPE = "0";
+    public static final String DEFAULT_ICMP_CODE = "0";
 
     public static final int COMMON_FLOW_PRIORITY = 1000;
     public static final int D2G_FIXED_FLOW_PRIORITY = 850;

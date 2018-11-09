@@ -90,7 +90,7 @@ public class Mudgee {
                 Packet packet;
                 try {
                     packet = handle.getNextPacketEx();
-                } catch (IllegalArgumentException e) {
+                } catch (IllegalArgumentException|ArrayIndexOutOfBoundsException e) {
                     continue;
                 }
 

@@ -197,7 +197,7 @@ public class OFSwitch {
 
 
     private void cleanIdleFlows() {
-        for (int i = 0 ; i < ofFlows.size(); i++) {
+        for (int i = ofFlows.size()-1 ; i >= 0; i--) {
             OFFlow currentFlow = ofFlows.get(i);
             if (currentFlow.getIdleTimeOut() > 0 && (currentTime - currentFlow.getLastPacketTransmittedTime())
                     >= currentFlow.getIdleTimeOut()) {
