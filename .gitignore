@@ -3,7 +3,7 @@
 
 # Ignore everything in this directory
 target
-result
+result/*
 .classpath
 .settings
 .project
