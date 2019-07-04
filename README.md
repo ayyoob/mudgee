@@ -1,7 +1,13 @@
 # MUDGEE
 Generate MUD Profiles using PCAP.
+
 # Prerequisite
 LibPcap (install tcpdump)
+    # linux - apt-get install tcpdump
+    # OSX - built in by default.
+    # Windows - follow https://nmap.org/npcap/
+Maven
+    # Follow https://www.baeldung.com/install-maven-on-windows-linux-mac guide for further instructions.
 
 # Installation
 
@@ -10,6 +16,9 @@ $ git clone https://github.com/ayyoob/mudgee.git
 $ cd mudgee
 $ mvn clean install
 ```
+
+This tool requires a configuration file to be passed as an argument during the execution of the tool. A sample config(eg mud_config.json) file is provided in the target directory. Before executing the tool make sure to update the required parameters to identify device, gateway and pcap informations. 
+
 Sample mud config is provided:
     pcap location, device mac, device name, gateway mac and gateway ip details needs to be passed through the config.
 
