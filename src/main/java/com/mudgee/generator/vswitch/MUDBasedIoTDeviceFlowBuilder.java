@@ -37,6 +37,7 @@ public class MUDBasedIoTDeviceFlowBuilder implements ControllerApp {
     private static final long MAX_FLOWS_PER_DEVICE = 500;
     private static final double MIN_FLOW_IMPACT_THRESHOLD = 5; //percentage
     private static final long MIN_TIME_FOR_FLOWS_MILLI_SECONDS = 120000;
+    private static final long IDLE_TIMEOUT = 10000;
 
     private boolean enabled = true;
     private List<String> devices;
@@ -312,6 +313,21 @@ public class MUDBasedIoTDeviceFlowBuilder implements ControllerApp {
                             }
                         }
                         OFController.getInstance().addFlow(dpId, ofFlow);
+                    }  if (protocol.equals(Constants.TCP_PROTO)) {
+                        OFFlow ofFlow = new OFFlow();
+                        ofFlow.setSrcMac(deviceMac);
+                        ofFlow.setDstMac(ofSwitch.getMacAddress());
+                        ofFlow.setDstIp(packet.getDstIp());
+                        ofFlow.setSrcIp(packet.getSrcIp());
+                        ofFlow.setDstPort(dstPort);
+                        ofFlow.setSrcPort(srcPort);
+                        ofFlow.setIpProto(protocol);
+                        ofFlow.setEthType(packet.getEthType());
+                        ofFlow.setOfAction(OFFlow.OFAction.NORMAL);
+                        ofFlow.setPriority(D2G_DYNAMIC_FLOW_PRIORITY);
+                        ofFlow.setIdleTimeOut(IDLE_TIMEOUT);
+                        OFController.getInstance().addFlow(dpId, ofFlow);
+
                     } else {
                         OFFlow ofFlow = new OFFlow();
                         ofFlow.setSrcMac(deviceMac);
@@ -496,6 +512,21 @@ public class MUDBasedIoTDeviceFlowBuilder implements ControllerApp {
                             }
                         }
                         OFController.getInstance().addFlow(dpId, ofFlow);
+                    } if (protocol.equals(Constants.TCP_PROTO)) {
+                        OFFlow ofFlow = new OFFlow();
+                        ofFlow.setSrcMac(ofSwitch.getMacAddress());
+                        ofFlow.setDstMac(deviceMac);
+                        ofFlow.setDstIp(packet.getDstIp());
+                        ofFlow.setSrcIp(packet.getSrcIp());
+                        ofFlow.setDstPort(dstPort);
+                        ofFlow.setSrcPort(srcPort);
+                        ofFlow.setIpProto(protocol);
+                        ofFlow.setEthType(packet.getEthType());
+                        ofFlow.setOfAction(OFFlow.OFAction.NORMAL);
+                        ofFlow.setPriority(D2G_DYNAMIC_FLOW_PRIORITY);
+                        ofFlow.setIdleTimeOut(IDLE_TIMEOUT);
+                        OFController.getInstance().addFlow(dpId, ofFlow);
+
                     } else {
                         OFFlow ofFlow = new OFFlow();
                         ofFlow.setSrcMac(ofSwitch.getMacAddress());
@@ -613,9 +644,24 @@ public class MUDBasedIoTDeviceFlowBuilder implements ControllerApp {
                         ofFlow.setSrcMac(deviceMac);
                         ofFlow.setSrcPort(srcPort);
                         ofFlow.setIpProto(protocol);
-                         ofFlow.setEthType(packet.getEthType());
+                        ofFlow.setEthType(packet.getEthType());
                         ofFlow.setOfAction(OFFlow.OFAction.NORMAL);
                         ofFlow.setPriority(L2D_FIXED_FLOW_INIALIZED_PRIORITY);
+                        OFController.getInstance().addFlow(dpId, ofFlow);
+
+                    } if (protocol.equals(Constants.TCP_PROTO)) {
+                        String deviceMac = destMac;
+                        OFFlow ofFlow = new OFFlow();
+                        ofFlow.setDstMac(deviceMac);
+                        ofFlow.setDstIp(packet.getDstIp());
+                        ofFlow.setSrcIp(packet.getSrcIp());
+                        ofFlow.setDstPort(dstPort);
+                        ofFlow.setSrcPort(srcPort);
+                        ofFlow.setIpProto(protocol);
+                        ofFlow.setEthType(packet.getEthType());
+                        ofFlow.setOfAction(OFFlow.OFAction.NORMAL);
+                        ofFlow.setPriority(D2G_DYNAMIC_FLOW_PRIORITY);
+                        ofFlow.setIdleTimeOut(IDLE_TIMEOUT);
                         OFController.getInstance().addFlow(dpId, ofFlow);
 
                     } else {
@@ -1193,9 +1239,30 @@ public class MUDBasedIoTDeviceFlowBuilder implements ControllerApp {
                             writer.close();
                         }
                     }
+
+                    //deviceDnsMap.get(deviceMac);
+//                    Map<String, Set<String>> dnsXmap = deviceDnsMap.get(deviceMac);
+//                    try {
+//                        writer = new PrintWriter(currentPath + File.separator
+//                                + deviceMac.replace(":","") + "_dnsmap.csv", "UTF-8");
+//                        for (String key : dnsXmap.keySet()) {
+//                            for (String ip : dnsXmap.get(key)) {
+//                                writer.println(key + "," + ip);
+//                            }
+//                        }
+//                    } catch (FileNotFoundException e) {
+//                        e.printStackTrace();
+//                    } catch (UnsupportedEncodingException e) {
+//                        e.printStackTrace();
+//                    } finally {
+//                        if (writer != null) {
+//                            writer.close();
+//                        }
+//                    }
                 }
                 try {
-                    MUDGenerator.generate(deviceName, deviceMac, OFController.getInstance().getSwitch(dpId).getIp(),
+                    MUDGenerator mudGenerator = new MUDGenerator();
+                    mudGenerator.generate(deviceName, deviceMac, OFController.getInstance().getSwitch(dpId).getIp(),
                             OFController.getInstance().getSwitch(dpId).getIpv6());
                 } catch (JsonProcessingException |FileNotFoundException |UnsupportedEncodingException e) {
                     e.printStackTrace();

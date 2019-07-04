@@ -7,8 +7,12 @@
 
     "deviceConfig":{
         "device":"00:24:e4:20:28:c3",
-        "deviceName": "augustdoorbellcam"
+        "deviceName": "augustdoorbellcamx"
     },
 
-    "pcapLocation": "/Users/ayyoobhamza/Desktop/unsw/mud/pcap/0024e42028c6.pcap"
+    "controllers": {
+        "urn:ietf:params:mud:camera_controller": "169.171.200.0/24"
+    },
+
+    "pcapLocation": "/Users/ayyoobhamza/Desktop/unsw/2-mud/pcap/0024e42028c6.pcap"
 }

@@ -18,12 +18,14 @@
 package com.mudgee.generator.processor;
 
 import com.mudgee.generator.Constants;
+import com.mudgee.generator.Controller;
 import com.mudgee.generator.vswitch.OFFlow;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mudgee.generator.processor.mud.*;
 
 import java.io.*;
+import java.net.UnknownHostException;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -51,6 +53,8 @@ public class MUDGenerator {
 	private static final String ipv4Pattern = "(([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\.){3}([01]?\\d\\d?|2[0-4]\\d|25[0-5])";
 	private static final String ipv6Pattern = "([0-9a-f]{1,4}:){7}([0-9a-f]){1,4}";
 
+	private static Map<String, CIDRMatcher> cidrMatcherMap = new HashMap<>();
+
 	static {
 		try {
 			VALID_IPV4_PATTERN = Pattern.compile(ipv4Pattern, Pattern.CASE_INSENSITIVE);
@@ -60,8 +64,17 @@ public class MUDGenerator {
 		}
 	}
 
+	public MUDGenerator(){
+		for (String urn : Controller.controllerMap.keySet()) {
+			try {
+				CIDRMatcher cidrMatcher = new CIDRMatcher(Controller.controllerMap.get(urn));
+				cidrMatcherMap.put(urn, cidrMatcher);
+			} catch (UnknownHostException e) {
+			}
+		}
+	}
 
-	public static void generate(String deviceName, String deviceMac, String defaultGatewayIp, String defaultGatewayIpv6)
+	public void generate(String deviceName, String deviceMac, String defaultGatewayIp, String defaultGatewayIpv6)
 			throws JsonProcessingException, FileNotFoundException, UnsupportedEncodingException {
 		Set<OFFlow> fromDevice = new HashSet<>();
 		Set<OFFlow> toDevice = new HashSet<>();
@@ -70,7 +83,7 @@ public class MUDGenerator {
 
 	}
 
-	private static void generateDeviceFlows(String deviceName, String deviceMac,
+	private void generateDeviceFlows(String deviceName, String deviceMac,
 											Set<OFFlow> fromDevice, Set<OFFlow> toDevice, String defaultGatewayIp,  String defaultGatewayIpv6)
 			throws JsonProcessingException, FileNotFoundException, UnsupportedEncodingException {
 		String currentPath = Paths.get(".").toAbsolutePath().normalize().toString();
@@ -356,7 +369,7 @@ public class MUDGenerator {
 		}
 	}
 
-	private static void generateMud(String deviceName, String defaultGatewayIp, String defaultGatewayIpv6, Set<OFFlow> fromDevice,
+	private void generateMud(String deviceName, String defaultGatewayIp, String defaultGatewayIpv6, Set<OFFlow> fromDevice,
 									Set<OFFlow> toDevice) throws FileNotFoundException, UnsupportedEncodingException, JsonProcessingException {
 		String currentPath = Paths.get(".").toAbsolutePath().normalize().toString();
 		//ipv4 from Device
@@ -518,7 +531,7 @@ public class MUDGenerator {
 		out.close();
 	}
 
-	private static void printList(Set<OFFlow> toPrint, PrintWriter out) {
+	private void printList(Set<OFFlow> toPrint, PrintWriter out) {
 		for (OFFlow ofFlow : toPrint) {
 			ofFlow.setVlanId("NIL");
 			String flowString = ofFlow.getFlowStringWithoutFlowStat();
@@ -528,7 +541,7 @@ public class MUDGenerator {
 		out.flush();
 	}
 
-	private static List<Ace> getFromAces(Set<OFFlow> fromDevice, String fromId, String defaultGatewayIp, boolean ipv6
+	private List<Ace> getFromAces(Set<OFFlow> fromDevice, String fromId, String defaultGatewayIp, boolean ipv6
 			, boolean isIp) {
 		List<Ace> aceList = new ArrayList<>();
 		int id = 0;
@@ -590,7 +603,13 @@ public class MUDGenerator {
 					}
 					match.setIetfMudMatch(ietfMudMatch);
 				} else {
-					if (validIP(ofFlow.getDstIp())) {
+					String controller = getController(ofFlow.getDstIp());
+					if (controller != null) {
+						IetfMudMatch ietfMudMatch = new IetfMudMatch();
+						ietfMudMatch.setController(controller);
+						match.setIetfMudMatch(ietfMudMatch);
+
+					} else if (validIP(ofFlow.getDstIp())) {
 						ipv4Match.setDestinationIp(ofFlow.getDstIp() + "/32");
 						if (ofFlow.getEthType().equals(Constants.ETH_TYPE_IPV6)) {
 							ipv6Match.setDestinationIp(ofFlow.getDstIp());
@@ -682,7 +701,7 @@ public class MUDGenerator {
 		return aceList;
 	}
 
-	private static List<Ace> getToAces(Set<OFFlow> toDevice, String toId, String defaultGatewayIp, boolean ipv6) {
+	private List<Ace> getToAces(Set<OFFlow> toDevice, String toId, String defaultGatewayIp, boolean ipv6) {
 		List<Ace> aceList = new ArrayList<>();
 		int id = 0;
 		for (OFFlow ofFlow : toDevice) {
@@ -724,7 +743,13 @@ public class MUDGenerator {
 				}
 				match.setIetfMudMatch(ietfMudMatch);
 			} else {
-				if (validIP(ofFlow.getSrcIp())) {
+				String controller = getController(ofFlow.getSrcIp());
+				if (controller != null) {
+					IetfMudMatch ietfMudMatch = new IetfMudMatch();
+					ietfMudMatch.setController(controller);
+					match.setIetfMudMatch(ietfMudMatch);
+
+				} else if (validIP(ofFlow.getSrcIp())) {
 					ipv4Match.setSourceIp(ofFlow.getSrcIp() + "/32");
 					if (ofFlow.getEthType().equals(Constants.ETH_TYPE_IPV6)) {
 						ipv6Match.setSourceIp(ofFlow.getSrcIp());
@@ -798,6 +823,18 @@ public class MUDGenerator {
 		}
 		Matcher m2 = VALID_IPV6_PATTERN.matcher(ipAddress);
 		return m2.matches();
+	}
+
+	private static String getController(String ip) {
+		for (String controller : cidrMatcherMap.keySet()) {
+			try {
+				if (cidrMatcherMap.get(controller).isInRange(ip)) {
+					return controller;
+				}
+			} catch (UnknownHostException e) {
+			}
+		}
+		return null;
 	}
 
 	private static PortMatch getPortMatch(String port) {

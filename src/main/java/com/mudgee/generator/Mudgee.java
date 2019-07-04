@@ -28,13 +28,13 @@ import org.pcap4j.core.Pcaps;
 import org.pcap4j.packet.*;
 import org.pcap4j.packet.namednumber.EtherType;
 import org.pcap4j.packet.namednumber.IpNumber;
-
 import java.io.EOFException;
 import java.io.File;
 import java.io.FileReader;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeoutException;
 
 /**
@@ -65,11 +65,19 @@ public class Mudgee {
         String ipAddress = (String) switchConfig.get("ipAddress");
         String ipv6Address = (String) switchConfig.get("ipv6Address");
         JSONObject deviceConfig = (JSONObject) jsonObject.get("deviceConfig");
+        JSONObject controllerConfig = (JSONObject) jsonObject.get("controllers");
+        if (controllerConfig.keySet().size() > 0) {
+            Set<String> controllerNames = controllerConfig.keySet();
+            for (String controller : controllerNames) {
+                Controller.controllerMap.put(controller, (String) controllerConfig.get(controller));
+            }
+        }
         OFController.getInstance().registerApps(new MUDBasedIoTDeviceFlowBuilder(), deviceConfig);
         final OFSwitch ofSwitch = new OFSwitch(dpId, macAddress, ipAddress, ipv6Address);
         OFController.getInstance().addSwitch(ofSwitch);
         processPcap(pcapLocation, ofSwitch);
         OFController.getInstance().complete();
+
     }
 
     private static void processPcap(String pcapLocation, OFSwitch ofSwitch) throws PcapNativeException {
