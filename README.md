@@ -33,7 +33,7 @@ Before executing the tool, make sure to declare three parameters including "defa
 $ java -jar target/mudgee-1.0.0-SNAPSHOT.jar target/mud_config.json 
 ```
 
-After the execution, Check the result directory for the generated MUD.
+After execution, this tool outputs the generated MUD profile into the results directory (i.e. /mudgee/result/)
 
 # Configurations
 
