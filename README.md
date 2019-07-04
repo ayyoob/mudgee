@@ -33,29 +33,23 @@ Before executing the tool, make sure to declare three parameters including "defa
 $ java -jar target/mudgee-1.0.0-SNAPSHOT.jar target/mud_config.json 
 ```
 
-After the execution, Check the result directory for the generated MUD.
+After execution, this tool outputs the generated MUD profile into the results directory (i.e. /mudgee/result/)
 
 # Configurations
 
-We generate MUD profile for a device by monitoring its traffic trace.
+This tool generates MUD profile of a device by analyzing its traffic trace.
 
-Sample mud config is provided:
-    pcap location, device mac, device name, gateway mac and gateway ip details needs to be passed through the config.
+A sample config file is provided in /mudgee/src/main/resources/apps/mud_config.json
+you need to specify three parameters in the config file: "defaultGatewayConfig" (MAC/IPv4/IPv6 addresses), "deviceConfig" (MAC address, name) and "pcapLocation" (file path and name).
 
-    "pcapLocation": "absolute file path of the pcap"
+    "pcapLocation": "/Users/ayyoobhamza/Documents/mud/pcap/0024e42028c6.pcap"
 
-Location of the traffic trace.
+Location/name of the traffic trace.
 
     "deviceConfig":{ "device":"00:24:e4:20:28:c3", "deviceName": "augustdoorbellcam" }
- device" : Mac address of the device that we monitor to generate the MUD for.
- 
- deviceName": name that appears on the MUD profile.
+"device": MAC address of the device that we aim to generate the MUD profile for.
+"deviceName": name that appears in the output MUD profile.
 
     "defaultGatewayConfig": { "macAddress" : "14:cc:20:51:33:ea", "ipAddress": "192.168.1.1", "ipv6Address": "fe80:0:0:0:16cc:20ff:fe51:33ea" }
 
-In order to capture device to Internet communication, we require the default gateway details. Therefore mac address, IP addresses of the default gateway has to be given through the config. If you are using a router for your setup then this details can be fetched through its management page in its web UI.
-
-    "controllers": {
-            "urn:ietf:params:mud:camera_controller": "169.171.200.0/24"
-        }
- Controller to IP mapping. If there are no controllers in your setup then leave it empty.
+In order to capture communications between the device and servers on the Internet , our tool requires the default gateway details. Therefore, MAC address, IP addresses of the default gateway are needed to be declared in the config file.
