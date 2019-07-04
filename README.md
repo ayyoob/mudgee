@@ -4,16 +4,17 @@ Generate MUD Profiles using PCAP.
 # Prerequisite
 1. LibPcap (install tcpdump)
 
-
+```sh
     linux - apt-get install tcpdump
     OSX - built in by default.
     Windows - follow https://nmap.org/npcap/
+ ```
     
 2. Maven
 
-
+```sh
     Follow https://www.baeldung.com/install-maven-on-windows-linux-mac guide for further instructions.
-    
+```    
 
 # Installation
 
