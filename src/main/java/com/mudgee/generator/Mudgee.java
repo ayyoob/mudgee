@@ -65,11 +65,13 @@ public class Mudgee {
         String ipAddress = (String) switchConfig.get("ipAddress");
         String ipv6Address = (String) switchConfig.get("ipv6Address");
         JSONObject deviceConfig = (JSONObject) jsonObject.get("deviceConfig");
-        JSONObject controllerConfig = (JSONObject) jsonObject.get("controllers");
-        if (controllerConfig.keySet().size() > 0) {
-            Set<String> controllerNames = controllerConfig.keySet();
-            for (String controller : controllerNames) {
-                Controller.controllerMap.put(controller, (String) controllerConfig.get(controller));
+        if (jsonObject.get("controllers") != null) {
+            JSONObject controllerConfig = (JSONObject) jsonObject.get("controllers");
+            if (controllerConfig.keySet().size() > 0) {
+                Set<String> controllerNames = controllerConfig.keySet();
+                for (String controller : controllerNames) {
+                    Controller.controllerMap.put(controller, (String) controllerConfig.get(controller));
+                }
             }
         }
         OFController.getInstance().registerApps(new MUDBasedIoTDeviceFlowBuilder(), deviceConfig);

@@ -10,9 +10,5 @@
         "deviceName": "augustdoorbellcamx"
     },
 
-    "controllers": {
-        "urn:ietf:params:mud:camera_controller": "169.171.200.0/24"
-    },
-
     "pcapLocation": "/Users/ayyoobhamza/Desktop/unsw/2-mud/pcap/0024e42028c6.pcap"
 }
