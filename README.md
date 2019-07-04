@@ -2,12 +2,18 @@
 Generate MUD Profiles using PCAP.
 
 # Prerequisite
-LibPcap (install tcpdump)
-    - linux - apt-get install tcpdump
-    - OSX - built in by default.
-    - Windows - follow https://nmap.org/npcap/
-Maven
-    # Follow https://www.baeldung.com/install-maven-on-windows-linux-mac guide for further instructions.
+1. LibPcap (install tcpdump)
+
+
+    linux - apt-get install tcpdump
+    OSX - built in by default.
+    Windows - follow https://nmap.org/npcap/
+    
+2. Maven
+
+
+    Follow https://www.baeldung.com/install-maven-on-windows-linux-mac guide for further instructions.
+    
 
 # Installation
 
@@ -17,7 +23,7 @@ $ cd mudgee
 $ mvn clean install
 ```
 
-This tool requires a configuration file to be passed as an argument during the execution of the tool. A sample config(eg mud_config.json) file is provided in the target directory. Before executing the tool make sure to update the required parameters to identify device, gateway and pcap informations. 
+This tool requires a configuration file to be passed as an argument during the execution. A sample config (eg. mud_config.json) file is provided in the target directory. Before executing the tool make sure to update the required parameters to identify device, gateway and pcap informations. 
 
 # Execute
 
