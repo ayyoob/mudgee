@@ -52,4 +52,4 @@ Location/name of the traffic trace.
 
     "defaultGatewayConfig": { "macAddress" : "14:cc:20:51:33:ea", "ipAddress": "192.168.1.1", "ipv6Address": "fe80:0:0:0:16cc:20ff:fe51:33ea" }
 
-In order to capture communications between the device and servers on the Internet , our tool requires the default gateway details. Therefore, MAC address, IP addresses of the default gateway are needed to be declared in the config file.
+In order to capture communications between the device and servers on the Internet , our tool requires the default gateway details. Therefore, MAC address and IP addresses of the default gateway are needed to be declared in the config file.
